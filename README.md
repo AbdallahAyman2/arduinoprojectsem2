@@ -50,9 +50,10 @@ arduinoprojectsem2/
 ### Run locally
 
 ```bash
-# Option A – serve with npx (recommended, enables relative JS imports)
+# Option A – serve with npx (recommended)
+# Run from the REPO ROOT so vercel.json rewrites work (/ → /src/app.html)
 npx serve .
-# Then open: http://localhost:3000/src/app.html
+# Then open: http://localhost:3000
 
 # Option B – Python built-in server
 python3 -m http.server 8080
@@ -60,7 +61,14 @@ python3 -m http.server 8080
 ```
 
 > ⚠️ **Do not open `app.html` as a `file://` URL** – the Web Bluetooth API and
-> relative script imports (`bluetooth.js`, `supabase.js`) require an HTTP context.
+> absolute script paths (`/src/bluetooth.js`, `/src/supabase.js`) require an HTTP context.
+
+### Deploy to Vercel
+
+The repo includes a `vercel.json` that rewrites the root URL (`/`) to
+`src/app.html`, so visiting `https://<your-project>.vercel.app/` loads the
+app directly. No build step is required – it is a fully static single-page
+app served from CDN assets.
 
 ---
 

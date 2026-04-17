@@ -24,9 +24,18 @@
 
   QUICK LOCAL TEST
   ----------------
-  Open this file directly in Chrome (file:// URL) OR run:
+  Run a local HTTP server from the REPO ROOT (not from src/):
     npx serve .
-  Then open http://localhost:3000/src/app.html
+  Then open http://localhost:3000   (vercel.json rewrites / → /src/app.html)
+
+  Alternatively:
+    python3 -m http.server 8080
+  Then open http://localhost:8080/src/app.html
+
+  Deployed on Vercel: the root URL automatically serves this file via vercel.json.
+
+  NOTE: Do NOT open as a file:// URL – Web Bluetooth and absolute script paths
+  (/src/bluetooth.js, /src/supabase.js) require an HTTP(S) context.
 
   See README.md for full setup instructions.
 -->
@@ -49,9 +58,9 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
-  <!-- FloraCraft Services (relative paths – adjust if hosting elsewhere) -->
-  <script src="bluetooth.js" defer></script>
-  <script src="supabase.js"  defer></script>
+  <!-- FloraCraft Services (absolute paths – work under any serving URL/rewrite) -->
+  <script src="/src/bluetooth.js" defer></script>
+  <script src="/src/supabase.js"  defer></script>
 
   <!-- ── Tailwind Design-System Config (matches Stitch design tokens) ─── -->
   <script>
