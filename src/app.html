@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<!--
+  FloraCraft IoT Dashboard
+  ========================
+  Hybrid single-page app that works as:
+    • A mobile web app (add to home screen) with a bottom tab bar
+    • A desktop/web dashboard with a left sidebar
+
+  SCREENS
+  -------
+  0 – Onboarding   (shown once, stored in localStorage)
+  1 – Dashboard    (live sensor gauges + actuator status)
+  2 – Raw Stream   (scrolling Bluetooth serial terminal)
+  3 – Plant Profiles (Silvercock / Shia threshold presets)
+  4 – Testing Mode (manual actuator triggers + timer sliders)
+  5 – Settings     (Supabase credentials + device name)
+
+  DEPENDENCIES (CDN – no build step needed)
+  -----------------------------------------
+  • Tailwind CSS v3  – utility styling
+  • Chart.js v4      – temperature / soil / wetness line charts
+  • bluetooth.js     – Web Bluetooth serial bridge (src/bluetooth.js)
+  • supabase.js      – Supabase sync service     (src/supabase.js)
+
+  QUICK LOCAL TEST
+  ----------------
+  Open this file directly in Chrome (file:// URL) OR run:
+    npx serve .
+  Then open http://localhost:3000/src/app.html
+
+  See README.md for full setup instructions.
+-->
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#006d37" />
+  <title>FloraCraft – IoT Dashboard</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=JetBrains+Mono&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- FloraCraft Services (relative paths – adjust if hosting elsewhere) -->
+  <script src="bluetooth.js" defer></script>
+  <script src="supabase.js"  defer></script>
+
+  <!-- ── Tailwind Design-System Config (matches Stitch design tokens) ─── -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            /* Primary green */
+            'primary':                    '#006d37',
+            'on-primary':                 '#ffffff',
+            'primary-container':          '#2ecc71',
+            'on-primary-container':       '#005027',
+            'primary-fixed':              '#6bfe9c',
+            'primary-fixed-dim':          '#4ae183',
+            'on-primary-fixed':           '#00210c',
+            'on-primary-fixed-variant':   '#005228',
+            'inverse-primary':            '#4ae183',
+            /* Secondary */
+            'secondary':                  '#336943',
+            'on-secondary':               '#ffffff',
+            'secondary-container':        '#b5f1c0',
+            'on-secondary-container':     '#396f48',
+            'secondary-fixed':            '#b5f1c0',
+            'secondary-fixed-dim':        '#9ad4a5',
+            'on-secondary-fixed':         '#00210c',
+            'on-secondary-fixed-variant': '#19512d',
+            /* Tertiary */
+            'tertiary':                   '#98472a',
+            'on-tertiary':                '#ffffff',
+            'tertiary-container':         '#ff9875',
+            'on-tertiary-container':      '#772e14',
+            'tertiary-fixed':             '#ffdbd0',
+            'tertiary-fixed-dim':         '#ffb59d',
+            'on-tertiary-fixed':          '#390c00',
+            'on-tertiary-fixed-variant':  '#793015',
+            /* Error */
+            'error':                      '#ba1a1a',
+            'on-error':                   '#ffffff',
+            'error-container':            '#ffdad6',
+            'on-error-container':         '#93000a',
+            /* Surfaces */
+            'surface':                    '#f7f9ff',
+            'surface-dim':               '#cbdcee',
+            'surface-bright':             '#f7f9ff',
+            'surface-container-lowest':   '#ffffff',
+            'surface-container-low':      '#ecf4ff',
+            'surface-container':          '#e2efff',
+            'surface-container-high':     '#d9eafc',
+            'surface-container-highest':  '#d4e4f6',
+            'surface-variant':            '#d4e4f6',
+            'on-surface':                 '#0d1d2a',
+            'on-surface-variant':         '#3d4a3e',
+            'inverse-surface':            '#223240',
+            'inverse-on-surface':         '#e7f2ff',
+            /* Other */
+            'background':                 '#f7f9ff',
+            'on-background':              '#0d1d2a',
+            'outline':                    '#6c7b6d',
+            'outline-variant':            '#bbcbbb',
+            'surface-tint':               '#006d37',
+          },
+          borderRadius: {
+            DEFAULT: '0.25rem',
+            lg:      '0.5rem',
+            xl:      '0.75rem',
+            '2xl':   '1rem',
+            '3xl':   '1.5rem',
+            full:    '9999px',
+          },
+          fontFamily: {
+            headline: ['Manrope'],
+            body:     ['Inter'],
+            label:    ['Inter'],
+            mono:     ['JetBrains Mono', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* Material Symbols rendering */
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      font-size: 24px;
+      line-height: 1;
+      vertical-align: middle;
+    }
+    /* Glass panel used in overlay modals */
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+    }
+    /* Tab screens – hidden by default, shown via JS */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* Gradient CTA button */
+    .btn-cta {
+      background: linear-gradient(135deg, #006d37 0%, #2ecc71 100%);
+    }
+    /* Scrollable terminal */
+    #terminal-log { scroll-behavior: smooth; }
+    /* Responsive sidebar layout: hidden on mobile, visible on md+ */
+    #sidebar { display: none; }
+    @media (min-width: 768px) {
+      #sidebar      { display: flex; }
+      #bottom-nav   { display: none; }
+      #main-content { margin-left: 240px; }
+    }
+    /* Safe area padding for notched phones */
+    #bottom-nav { padding-bottom: env(safe-area-inset-bottom, 0); }
+
+    /* Chart canvas sizing */
+    .chart-canvas { max-height: 220px; }
+
+    /* Slider thumb styling for webkit */
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: #006d37;
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(0,109,55,0.3);
+      cursor: pointer;
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: #006d37;
+      border: 3px solid white;
+      cursor: pointer;
+    }
+    input[type=range] { -webkit-appearance: none; appearance: none; height: 6px; }
+  </style>
+</head>
+
+<body class="bg-surface font-body text-on-surface min-h-screen">
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     ONBOARDING OVERLAY (hidden after first visit)
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div id="onboarding" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-[#001f0d] to-[#004d28] text-white px-8 py-16">
+  <!-- Logo -->
+  <div class="flex items-center gap-3 mb-8">
+    <span class="material-symbols-outlined text-5xl text-primary-fixed" style="font-variation-settings:'FILL' 1;">psychiatry</span>
+    <h1 class="text-4xl font-extrabold font-headline tracking-tight">FloraCraft</h1>
+  </div>
+
+  <!-- Tagline -->
+  <p class="text-center text-white/70 text-lg max-w-xs leading-relaxed mb-12">
+    Industrial-grade greenhouse control — powered by IoT, Bluetooth, and real-time cloud sync.
+  </p>
+
+  <!-- Feature list -->
+  <ul class="space-y-4 mb-14 w-full max-w-xs">
+    <li class="flex items-center gap-4">
+      <span class="material-symbols-outlined text-primary-fixed">bluetooth</span>
+      <span class="text-sm font-medium">Connect to your ZS-040 / HC-05 module</span>
+    </li>
+    <li class="flex items-center gap-4">
+      <span class="material-symbols-outlined text-primary-fixed">dashboard</span>
+      <span class="text-sm font-medium">Monitor temp, soil moisture &amp; leaf wetness</span>
+    </li>
+    <li class="flex items-center gap-4">
+      <span class="material-symbols-outlined text-primary-fixed">experiment</span>
+      <span class="text-sm font-medium">Run actuator tests without the serial monitor</span>
+    </li>
+    <li class="flex items-center gap-4">
+      <span class="material-symbols-outlined text-primary-fixed">cloud_sync</span>
+      <span class="text-sm font-medium">Sync readings to Supabase in real time</span>
+    </li>
+  </ul>
+
+  <button id="btn-get-started"
+          class="btn-cta w-full max-w-xs py-4 rounded-2xl font-bold text-lg text-white shadow-2xl hover:opacity-90 active:scale-95 transition-all">
+    Get Started
+  </button>
+  <p class="mt-4 text-white/40 text-xs">Serve this folder locally (e.g. <code>npx serve .</code>) and open in Chrome</p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     LEFT SIDEBAR (md+ screens)
+     ═══════════════════════════════════════════════════════════════════════ -->
+<aside id="sidebar"
+       class="fixed left-0 top-0 h-full w-60 flex-col bg-surface-container-low border-r border-outline-variant/20 z-40 pt-6 pb-8 px-4">
+  <!-- Branding -->
+  <div class="flex items-center gap-2 px-2 mb-8">
+    <span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings:'FILL' 1;">psychiatry</span>
+    <span class="text-xl font-extrabold font-headline text-primary">FloraCraft</span>
+  </div>
+
+  <!-- Connection badge -->
+  <div id="sidebar-conn-badge"
+       class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-container-high mb-6 cursor-pointer hover:bg-surface-container transition-colors"
+       onclick="window.handleBtConnect()">
+    <div id="sidebar-dot" class="w-2.5 h-2.5 rounded-full bg-outline-variant"></div>
+    <span id="sidebar-conn-label" class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Disconnected</span>
+    <span class="material-symbols-outlined text-sm text-outline ml-auto">bluetooth</span>
+  </div>
+
+  <!-- Nav links -->
+  <nav class="space-y-1 flex-1">
+    <button data-screen="dashboard"      class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors">
+      <span class="material-symbols-outlined">dashboard</span> Dashboard
+    </button>
+    <button data-screen="raw_stream"     class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors">
+      <span class="material-symbols-outlined">terminal</span> Raw Stream
+    </button>
+    <button data-screen="plant_profiles" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors">
+      <span class="material-symbols-outlined">potted_plant</span> Plant Profiles
+    </button>
+    <button data-screen="testing_mode"   class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors">
+      <span class="material-symbols-outlined">experiment</span> Testing Mode
+    </button>
+    <button data-screen="settings"       class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors">
+      <span class="material-symbols-outlined">settings</span> Settings
+    </button>
+  </nav>
+
+  <!-- Footer hint -->
+  <p class="text-[10px] text-outline px-2 leading-relaxed mt-6">
+    Connect Bluetooth first, then navigate to any tab.
+    See README for wiring steps.
+  </p>
+</aside>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     TOP APP BAR (mobile only)
+     ═══════════════════════════════════════════════════════════════════════ -->
+<header class="md:hidden fixed top-0 w-full z-30 bg-surface-container-low/90 backdrop-blur-md flex items-center justify-between px-5 h-14">
+  <div class="flex items-center gap-2">
+    <span class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' 1;">psychiatry</span>
+    <span class="font-extrabold font-headline text-primary tracking-tight">FloraCraft</span>
+  </div>
+  <!-- Bluetooth connect button (mobile header) -->
+  <button onclick="window.handleBtConnect()"
+          class="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-colors"
+          id="header-bt-btn">
+    <div id="header-dot" class="w-2 h-2 rounded-full bg-outline-variant"></div>
+    <span id="header-bt-label">Connect</span>
+    <span class="material-symbols-outlined text-base">bluetooth</span>
+  </button>
+</header>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MAIN CONTENT AREA
+     ═══════════════════════════════════════════════════════════════════════ -->
+<main id="main-content" class="pt-14 md:pt-0 pb-20 md:pb-0">
+
+  <!-- ─────────────────────────────────────────────────────────────────────
+       SCREEN 1: DASHBOARD
+       ───────────────────────────────────────────────────────────────────── -->
+  <section id="screen-dashboard" class="screen active px-4 md:px-8 py-6 max-w-7xl mx-auto space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col gap-1">
+      <h2 class="text-3xl font-extrabold font-headline tracking-tight">Dashboard</h2>
+      <p class="text-sm text-outline font-medium">Real-time environmental telemetry</p>
+    </div>
+
+    <!-- Summary bento cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <!-- Temperature -->
+      <div class="bg-surface-container-lowest rounded-2xl p-5 flex flex-col justify-between min-h-[140px] hover:bg-surface-bright transition-colors">
+        <div class="flex justify-between items-start">
+          <span class="material-symbols-outlined text-primary p-2 bg-primary-container/20 rounded-xl">thermostat</span>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-outline uppercase tracking-widest">Temperature</p>
+          <!-- ── TODO (wiring): Update #val-temp via updateDashboard() below ── -->
+          <h3 id="val-temp" class="text-4xl font-extrabold font-headline mt-1">--°C</h3>
+        </div>
+      </div>
+      <!-- Soil Moisture -->
+      <div class="bg-surface-container-lowest rounded-2xl p-5 flex flex-col justify-between min-h-[140px] hover:bg-surface-bright transition-colors">
+        <div class="flex justify-between items-start">
+          <span class="material-symbols-outlined text-secondary p-2 bg-secondary-container/30 rounded-xl">water_drop</span>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-outline uppercase tracking-widest">Soil Moisture</p>
+          <h3 id="val-soil" class="text-4xl font-extrabold font-headline mt-1">--%</h3>
+        </div>
+      </div>
+      <!-- Leaf Wetness -->
+      <div class="bg-surface-container-lowest rounded-2xl p-5 flex flex-col justify-between min-h-[140px] hover:bg-surface-bright transition-colors">
+        <div class="flex justify-between items-start">
+          <span class="material-symbols-outlined text-tertiary p-2 bg-tertiary-container/30 rounded-xl">grain</span>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-outline uppercase tracking-widest">Leaf Wetness</p>
+          <h3 id="val-rain" class="text-4xl font-extrabold font-headline mt-1">--%</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <!-- Line chart (temp + soil trends) -->
+      <div class="lg:col-span-3 bg-surface-container-low rounded-2xl p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold text-base font-headline">Environmental Trends</h3>
+          <div class="flex gap-3">
+            <div class="flex items-center gap-1.5">
+              <div class="w-3 h-3 rounded-full bg-primary"></div>
+              <span class="text-xs font-semibold text-outline">Temp</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <div class="w-3 h-3 rounded-full bg-secondary"></div>
+              <span class="text-xs font-semibold text-outline">Moisture</span>
+            </div>
+          </div>
+        </div>
+        <!-- ── TODO (wiring): Chart is initialised in initCharts() below ── -->
+        <canvas id="chart-trends" class="chart-canvas w-full"></canvas>
+      </div>
+      <!-- Wetness gauge -->
+      <div class="lg:col-span-2 bg-surface-container-high rounded-2xl p-6 flex flex-col items-center justify-center">
+        <h3 class="font-bold text-base font-headline mb-6 self-start">Leaf Wetness</h3>
+        <div class="relative w-40 h-40">
+          <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="transparent" stroke="#d9eafc" stroke-width="10" />
+            <circle id="gauge-arc" cx="50" cy="50" r="40" fill="transparent"
+                    stroke="#98472a" stroke-width="10"
+                    stroke-dasharray="251" stroke-dashoffset="251"
+                    stroke-linecap="round" />
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span id="gauge-val" class="text-3xl font-extrabold font-headline">0%</span>
+            <span class="text-[10px] font-bold text-outline uppercase tracking-tighter mt-0.5">Wetness</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actuator status grid -->
+    <div>
+      <div class="flex justify-between items-end mb-4">
+        <h3 class="font-bold text-base font-headline">Actuator Status</h3>
+        <span id="act-mode-badge"
+              class="text-[10px] font-bold px-3 py-1 rounded-full bg-primary-container text-on-primary-container uppercase tracking-widest">
+          AUTO
+        </span>
+      </div>
+      <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+        <!-- Each card has an id so JS can update its badge text -->
+        <div class="bg-surface-container-lowest p-3 rounded-xl flex flex-col gap-2">
+          <span class="text-[10px] font-bold text-outline uppercase">Pump</span>
+          <span id="act-pump" class="bg-surface-variant text-on-surface-variant text-[10px] font-bold py-1 px-2 rounded-full self-start">OFF</span>
+        </div>
+        <div class="bg-surface-container-lowest p-3 rounded-xl flex flex-col gap-2">
+          <span class="text-[10px] font-bold text-outline uppercase">Fan</span>
+          <span id="act-fan"  class="bg-surface-variant text-on-surface-variant text-[10px] font-bold py-1 px-2 rounded-full self-start">OFF</span>
+        </div>
+        <div class="bg-surface-container-lowest p-3 rounded-xl flex flex-col gap-2">
+          <span class="text-[10px] font-bold text-outline uppercase">Heater</span>
+          <span id="act-heater" class="bg-surface-variant text-on-surface-variant text-[10px] font-bold py-1 px-2 rounded-full self-start">OFF</span>
+        </div>
+        <div class="bg-surface-container-lowest p-3 rounded-xl flex flex-col gap-2">
+          <span class="text-[10px] font-bold text-outline uppercase">Lid</span>
+          <span id="act-lid" class="bg-surface-variant text-on-surface-variant text-[10px] font-bold py-1 px-2 rounded-full self-start">CLOSED</span>
+        </div>
+        <div class="bg-surface-container-lowest p-3 rounded-xl flex flex-col gap-2">
+          <span class="text-[10px] font-bold text-outline uppercase">Mode</span>
+          <span id="act-mode" class="bg-primary-container text-on-primary-container text-[10px] font-bold py-1 px-2 rounded-full self-start">AUTO</span>
+        </div>
+        <div class="bg-surface-container-lowest p-3 rounded-xl flex flex-col gap-2">
+          <span class="text-[10px] font-bold text-outline uppercase">Profile</span>
+          <span id="act-profile" class="bg-tertiary-container text-on-tertiary-container text-[10px] font-bold py-1 px-2 rounded-full self-start">SILVERCOCK</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-xs text-outline text-center">
+      Last update: <span id="last-update">never</span>
+    </p>
+  </section>
+
+
+  <!-- ─────────────────────────────────────────────────────────────────────
+       SCREEN 2: RAW STREAM
+       ───────────────────────────────────────────────────────────────────── -->
+  <section id="screen-raw_stream" class="screen px-4 md:px-8 py-6 max-w-6xl mx-auto">
+    <!-- Header row -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
+      <div>
+        <h2 class="text-3xl font-extrabold font-headline tracking-tight">Raw Stream</h2>
+        <p class="text-sm text-on-surface-variant mt-1">Live serial output from the Arduino via Bluetooth</p>
+      </div>
+      <!-- BT status pill -->
+      <div class="flex items-center gap-3 bg-surface-container-low px-4 py-2.5 rounded-2xl border-l-4 border-primary">
+        <span class="material-symbols-outlined text-primary text-xl">bluetooth_connected</span>
+        <div>
+          <p class="text-[10px] uppercase font-bold tracking-tighter text-outline">Bluetooth</p>
+          <p id="stream-bt-status" class="text-sm font-mono font-medium">Disconnected</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terminal window -->
+    <div class="bg-inverse-surface rounded-3xl overflow-hidden flex flex-col shadow-2xl"
+         style="height: 480px;">
+      <!-- Terminal title bar (macOS style) -->
+      <div class="bg-black/30 px-5 py-3 flex justify-between items-center border-b border-white/5">
+        <div class="flex gap-1.5">
+          <div class="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
+          <div class="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
+          <div class="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+        </div>
+        <span class="text-[10px] font-mono text-white/40 uppercase tracking-widest">Baud 9600 · UTF-8</span>
+      </div>
+
+      <!-- Log area – all incoming BT lines appended here -->
+      <div id="terminal-log"
+           class="flex-1 overflow-y-auto p-5 font-mono text-sm space-y-1 leading-relaxed">
+        <p class="text-white/30 italic">— waiting for Bluetooth connection —</p>
+      </div>
+
+      <!-- Bottom controls bar -->
+      <div class="bg-black/20 px-5 py-3 flex flex-wrap items-center justify-between border-t border-white/5 gap-3">
+        <div class="flex items-center gap-2">
+          <button onclick="clearTerminal()"
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20 text-xs font-medium transition-colors">
+            <span class="material-symbols-outlined text-sm">delete_sweep</span> Clear
+          </button>
+          <button onclick="copyTerminal()"
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20 text-xs font-medium transition-colors">
+            <span class="material-symbols-outlined text-sm">content_copy</span> Copy
+          </button>
+        </div>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input id="auto-scroll" type="checkbox" checked class="sr-only peer" />
+          <div class="w-9 h-5 bg-white/10 rounded-full relative peer peer-checked:bg-primary-container
+                      after:content-[''] after:absolute after:top-0.5 after:left-0.5
+                      after:w-4 after:h-4 after:rounded-full after:bg-white/60
+                      peer-checked:after:translate-x-4 after:transition-transform"></div>
+          <span class="text-xs text-white/60">Auto-scroll</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Command input -->
+    <div class="mt-4 bg-surface-container-lowest rounded-2xl p-3 flex items-center gap-3 border-l-4 border-primary shadow-sm">
+      <div class="bg-surface-container-high p-2.5 rounded-xl text-primary">
+        <span class="material-symbols-outlined">terminal</span>
+      </div>
+      <input id="cmd-input" type="text"
+             class="flex-1 bg-transparent border-none focus:ring-0 font-mono text-sm placeholder:text-outline/60"
+             placeholder="Type raw command and press Enter (e.g. a, 1, T2500)"
+             onkeydown="if(event.key==='Enter') sendRawCommand()" />
+      <button onclick="sendRawCommand()"
+              class="bg-primary hover:bg-primary-container text-white p-2.5 rounded-xl flex items-center justify-center transition-colors shadow-md shadow-primary/20">
+        <span class="material-symbols-outlined">send</span>
+      </button>
+    </div>
+  </section>
+
+
+  <!-- ─────────────────────────────────────────────────────────────────────
+       SCREEN 3: PLANT PROFILES
+       ───────────────────────────────────────────────────────────────────── -->
+  <section id="screen-plant_profiles" class="screen px-4 md:px-8 py-6 max-w-5xl mx-auto">
+    <div class="mb-10">
+      <span class="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">System Configuration</span>
+      <h2 class="text-4xl font-extrabold font-headline tracking-tight">Plant Profiles</h2>
+      <p class="text-on-surface-variant mt-2 max-w-md">
+        Select the growth algorithm that matches your plant species.
+        The app will send the matching threshold overrides to the Arduino.
+      </p>
+    </div>
+
+    <!-- Profile cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+
+      <!-- Silvercock card (default active) -->
+      <div id="card-silvercock"
+           class="md:col-span-2 cursor-pointer relative overflow-hidden rounded-3xl bg-surface-container-lowest
+                  border-2 border-primary transition-all hover:bg-surface-bright"
+           onclick="selectProfile('silvercock')">
+        <div class="absolute top-4 right-4 bg-primary text-on-primary rounded-full p-1">
+          <span id="check-silvercock" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">check</span>
+        </div>
+        <div class="p-8">
+          <div class="w-20 h-20 rounded-2xl bg-secondary-container flex items-center justify-center mb-6">
+            <span class="material-symbols-outlined text-5xl text-on-secondary-container">potted_plant</span>
+          </div>
+          <h3 class="text-2xl font-bold font-headline mb-2">Silvercock</h3>
+          <p class="text-on-surface-variant text-sm mb-4">
+            High-altitude resilience profile. Triggers fan above 35 °C, runs pump below 55 % soil moisture.
+          </p>
+          <!-- Threshold badges -->
+          <div class="flex flex-wrap gap-2 text-[10px] font-bold uppercase">
+            <span class="px-2 py-1 bg-error/10 text-error rounded-full">TEMP_HIGH_ON = 35 °C</span>
+            <span class="px-2 py-1 bg-primary/10 text-primary rounded-full">SOIL_DRY_ON = 55 %</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shia card -->
+      <div id="card-shia"
+           class="cursor-pointer relative overflow-hidden rounded-3xl bg-surface-container-low
+                  border-2 border-transparent transition-all hover:bg-surface-container-lowest hover:border-outline-variant/30"
+           onclick="selectProfile('shia')">
+        <div class="absolute top-4 right-4 hidden bg-primary text-on-primary rounded-full p-1" id="check-shia-wrap">
+          <span id="check-shia" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">check</span>
+        </div>
+        <div class="p-8 flex flex-col h-full justify-between">
+          <div>
+            <div class="w-16 h-16 rounded-xl bg-tertiary-container/30 flex items-center justify-center mb-5">
+              <span class="material-symbols-outlined text-3xl text-tertiary">psychology</span>
+            </div>
+            <h3 class="text-xl font-bold font-headline mb-2">Shia</h3>
+            <p class="text-on-surface-variant text-sm mb-4">
+              Standard tropical profile. Triggers fan above 30 °C, runs pump below 35 % soil moisture.
+            </p>
+            <div class="flex flex-wrap gap-2 text-[10px] font-bold uppercase">
+              <span class="px-2 py-1 bg-error/10 text-error rounded-full">TEMP_HIGH_ON = 30 °C</span>
+              <span class="px-2 py-1 bg-primary/10 text-primary rounded-full">SOIL_DRY_ON = 35 %</span>
+            </div>
+          </div>
+          <button class="mt-6 w-full py-3 bg-white text-on-surface text-sm font-bold rounded-xl border border-outline-variant hover:bg-surface-bright transition-colors"
+                  onclick="event.stopPropagation(); selectProfile('shia')">
+            Select Shia
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active thresholds display -->
+    <div class="bg-surface-container-low rounded-3xl p-8 mb-10">
+      <div class="flex justify-between items-end mb-6">
+        <div>
+          <h4 class="text-lg font-bold font-headline">Active Thresholds</h4>
+          <p class="text-sm text-on-surface-variant">
+            Profile: <span id="active-profile-label" class="text-primary font-semibold">Silvercock</span>
+          </p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-surface-container-lowest p-5 rounded-2xl border-l-4 border-error">
+          <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-3">TEMP_HIGH_ON</span>
+          <span id="thresh-temp-high" class="text-3xl font-bold font-headline">35</span>
+          <span class="text-on-surface-variant font-medium"> °C</span>
+        </div>
+        <div class="bg-surface-container-lowest p-5 rounded-2xl border-l-4 border-secondary">
+          <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-3">TEMP_LOW_ON</span>
+          <span class="text-3xl font-bold font-headline">24</span>
+          <span class="text-on-surface-variant font-medium"> °C</span>
+        </div>
+        <div class="bg-surface-container-lowest p-5 rounded-2xl border-l-4 border-primary">
+          <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-3">SOIL_DRY_ON</span>
+          <span id="thresh-soil" class="text-3xl font-bold font-headline">55</span>
+          <span class="text-on-surface-variant font-medium"> %</span>
+        </div>
+        <div class="bg-surface-container-lowest p-5 rounded-2xl border-l-4 border-tertiary">
+          <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-3">RAIN_THRESHOLD</span>
+          <span class="text-3xl font-bold font-headline">45</span>
+          <span class="text-on-surface-variant font-medium"> %</span>
+        </div>
+      </div>
+      <!-- Apply button -->
+      <div class="mt-10 flex justify-center">
+        <button onclick="applyProfile()"
+                class="btn-cta px-10 py-4 text-white font-bold text-base rounded-2xl
+                       shadow-[0_12px_32px_-8px_rgba(0,109,55,0.4)] hover:opacity-90 active:scale-95 transition-all">
+          Apply Profile to Arduino
+        </button>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ─────────────────────────────────────────────────────────────────────
+       SCREEN 4: TESTING MODE
+       ───────────────────────────────────────────────────────────────────── -->
+  <section id="screen-testing_mode" class="screen px-4 md:px-8 py-6 max-w-5xl mx-auto space-y-8">
+    <!-- Mode toggle + warning -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <!-- AUTO / TEST toggle -->
+      <div class="inline-flex p-1 bg-surface-container-high rounded-xl w-fit">
+        <button id="btn-auto-mode"
+                onclick="setArduinoMode('auto')"
+                class="px-7 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm transition-all">
+          AUTO
+        </button>
+        <button id="btn-test-mode"
+                onclick="setArduinoMode('test')"
+                class="px-7 py-2 text-sm font-semibold text-slate-500 rounded-lg transition-all">
+          TEST
+        </button>
+      </div>
+      <!-- Warning banner (shown only in test mode) -->
+      <div id="test-warning"
+           class="hidden flex items-center gap-3 px-4 py-3 bg-error-container text-on-error-container rounded-xl">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">warning</span>
+        <p class="text-sm font-semibold">Automation paused — manual commands only.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- Left: Timer sliders -->
+      <div class="lg:col-span-5 space-y-6">
+        <div class="bg-surface-container-lowest p-6 rounded-3xl border border-outline-variant/15">
+          <div class="flex items-center gap-3 mb-6">
+            <span class="material-symbols-outlined text-primary">timer</span>
+            <h2 class="text-lg font-bold">Calibration Timers</h2>
+          </div>
+
+          <!-- Pump duration slider -->
+          <div class="space-y-3 mb-6">
+            <div class="flex justify-between items-end">
+              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Pump Run Duration</label>
+              <span id="pump-ms-label" class="font-mono text-base font-bold text-primary">2500ms</span>
+            </div>
+            <input id="slider-pump" type="range" min="500" max="10000" step="100" value="2500"
+                   class="w-full bg-surface-container-high rounded-full"
+                   oninput="updateSlider('pump', this.value)" />
+            <div class="flex justify-between text-[10px] text-outline font-bold uppercase tracking-tighter">
+              <span>500ms</span><span>10 000ms</span>
+            </div>
+          </div>
+
+          <!-- Lid transition slider -->
+          <div class="space-y-3 mb-8">
+            <div class="flex justify-between items-end">
+              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Lid Transition Time</label>
+              <span id="lid-ms-label" class="font-mono text-base font-bold text-primary">1350ms</span>
+            </div>
+            <input id="slider-lid" type="range" min="500" max="5000" step="50" value="1350"
+                   class="w-full bg-surface-container-high rounded-full"
+                   oninput="updateSlider('lid', this.value)" />
+            <div class="flex justify-between text-[10px] text-outline font-bold uppercase tracking-tighter">
+              <span>500ms</span><span>5 000ms</span>
+            </div>
+          </div>
+
+          <!-- Send timers button -->
+          <!--
+            ── TODO (wiring): sendTimers() builds "T<ms>\n" and "L<ms>\n" strings
+               and calls BluetoothService.send() for each. The Arduino must be
+               flashed with the combined auto+testing code to receive these overrides.
+          -->
+          <button onclick="sendTimers()"
+                  class="w-full py-3.5 bg-primary text-on-primary font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+            <span class="material-symbols-outlined">send</span>
+            Send Timers to Arduino
+          </button>
+        </div>
+
+        <!-- Recent commands list -->
+        <div class="bg-surface-container-low p-6 rounded-3xl">
+          <h3 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-5">Recent Commands</h3>
+          <ul id="cmd-history" class="space-y-3">
+            <li class="text-sm text-outline italic">No commands sent yet.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Right: Manual test buttons -->
+      <div class="lg:col-span-7">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <!--
+            Each button sends the matching serial char to the Arduino.
+            ── TODO (wiring): ensure Arduino is in TEST mode ('m') before using these.
+          -->
+          <button onclick="sendTestCmd('1', 'Test Pump')"
+                  class="aspect-square flex flex-col items-center justify-center gap-3 bg-surface-container-lowest rounded-3xl border-l-4 border-primary hover:bg-surface-bright shadow-sm transition-all">
+            <span class="material-symbols-outlined text-primary text-3xl">water_drop</span>
+            <span class="text-sm font-bold">Test Pump</span>
+          </button>
+          <button onclick="sendTestCmd('2', 'Test Fan')"
+                  class="aspect-square flex flex-col items-center justify-center gap-3 bg-surface-container-lowest rounded-3xl border-l-4 border-primary hover:bg-surface-bright shadow-sm transition-all">
+            <span class="material-symbols-outlined text-primary text-3xl">air</span>
+            <span class="text-sm font-bold">Test Fan</span>
+          </button>
+          <button onclick="sendTestCmd('3', 'Test Heater')"
+                  class="aspect-square flex flex-col items-center justify-center gap-3 bg-surface-container-lowest rounded-3xl border-l-4 border-primary hover:bg-surface-bright shadow-sm transition-all">
+            <span class="material-symbols-outlined text-primary text-3xl">wb_sunny</span>
+            <span class="text-sm font-bold">Test Heater</span>
+          </button>
+          <button onclick="sendTestCmd('4', 'Open Lid')"
+                  class="aspect-square flex flex-col items-center justify-center gap-3 bg-surface-container-lowest rounded-3xl border-l-4 border-secondary hover:bg-surface-bright shadow-sm transition-all">
+            <span class="material-symbols-outlined text-secondary text-3xl">keyboard_arrow_up</span>
+            <span class="text-sm font-bold">Open Lid</span>
+          </button>
+          <button onclick="sendTestCmd('5', 'Close Lid')"
+                  class="aspect-square flex flex-col items-center justify-center gap-3 bg-surface-container-lowest rounded-3xl border-l-4 border-secondary hover:bg-surface-bright shadow-sm transition-all">
+            <span class="material-symbols-outlined text-secondary text-3xl">keyboard_arrow_down</span>
+            <span class="text-sm font-bold">Close Lid</span>
+          </button>
+          <button onclick="sendTestCmd('0', 'Emergency Stop')"
+                  class="aspect-square flex flex-col items-center justify-center gap-3 bg-error-container/30 rounded-3xl border-l-4 border-error hover:bg-error-container/50 shadow-sm transition-all group">
+            <span class="material-symbols-outlined text-error text-3xl" style="font-variation-settings:'FILL' 1;">cancel</span>
+            <span class="text-sm font-bold text-on-error-container">Stop All</span>
+          </button>
+        </div>
+        <!-- Info note -->
+        <div class="mt-6 flex gap-3 p-5 bg-surface-container-high rounded-2xl border-l-2 border-outline-variant">
+          <span class="material-symbols-outlined text-outline mt-0.5">info</span>
+          <p class="text-sm text-on-surface-variant leading-relaxed">
+            Auto-off uses the calibrated timers. Switch to <strong>AUTO</strong> mode
+            to re-enable the automation logic, or use <strong>Stop All</strong>
+            to turn everything off immediately.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ─────────────────────────────────────────────────────────────────────
+       SCREEN 5: SETTINGS
+       ───────────────────────────────────────────────────────────────────── -->
+  <section id="screen-settings" class="screen px-4 md:px-8 py-6 max-w-4xl mx-auto">
+    <div class="mb-10">
+      <h1 class="text-3xl font-extrabold tracking-tight mb-1">Device Configuration</h1>
+      <p class="text-on-surface-variant">Manage cloud sync and hardware identity for your FloraCraft node.</p>
+    </div>
+
+    <div class="space-y-10">
+      <!-- Cloud Connectivity -->
+      <section class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+        <div class="md:col-span-4">
+          <h2 class="text-base font-bold mb-1">Cloud Services</h2>
+          <p class="text-sm text-on-surface-variant">
+            Enter your Supabase credentials. Readings are pushed every 2 s.
+            <!-- ── TODO (wiring): See supabase.js for the SQL schema to create. ── -->
+          </p>
+        </div>
+        <div class="md:col-span-8 bg-surface-container-lowest p-7 rounded-xl shadow-sm">
+          <div class="space-y-5">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-widest text-outline mb-1.5">Supabase Project URL</label>
+              <input id="inp-supa-url" type="text"
+                     placeholder="https://xyz.supabase.co"
+                     class="w-full bg-surface-container-high border-none rounded-lg px-3 py-2.5 text-sm font-mono focus:ring-0 focus:border-l-4 focus:border-l-primary transition-all" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-widest text-outline mb-1.5">Supabase Anon Key</label>
+              <div class="relative">
+                <input id="inp-supa-key" type="password"
+                       placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…"
+                       class="w-full bg-surface-container-high border-none rounded-lg px-3 py-2.5 pr-12 text-sm font-mono focus:ring-0 focus:border-l-4 focus:border-l-primary transition-all" />
+                <button onclick="toggleKeyVisibility()"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface">
+                  <span id="eye-icon" class="material-symbols-outlined text-xl">visibility</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Hardware Identity -->
+      <section class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+        <div class="md:col-span-4">
+          <h2 class="text-base font-bold mb-1">Hardware Identity</h2>
+          <p class="text-sm text-on-surface-variant">
+            Unique node name that appears in Supabase rows and the dashboard header.
+          </p>
+        </div>
+        <div class="md:col-span-8 bg-surface-container-lowest p-7 rounded-xl shadow-sm">
+          <div class="flex gap-4 items-center">
+            <div class="flex-1">
+              <label class="block text-xs font-bold uppercase tracking-widest text-outline mb-1.5">Device Name</label>
+              <input id="inp-device-name" type="text"
+                     value="Flora-GW-01"
+                     class="w-full bg-surface-container-high border-none rounded-lg px-3 py-2.5 text-sm focus:ring-0 focus:border-l-4 focus:border-l-primary transition-all" />
+            </div>
+            <div class="w-14 h-14 rounded-xl bg-surface-container flex items-center justify-center text-primary shrink-0">
+              <span class="material-symbols-outlined text-3xl">memory</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <div class="flex flex-col md:flex-row justify-end gap-3 pt-6 border-t border-outline-variant/15">
+        <button onclick="discardSettings()"
+                class="px-6 py-3 text-sm font-bold text-on-surface-variant hover:text-on-surface transition-colors">
+          Discard Changes
+        </button>
+        <button onclick="saveSettings()"
+                class="btn-cta px-8 py-3.5 text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">
+          Save Configuration
+        </button>
+      </div>
+    </div>
+
+    <!-- System status footer -->
+    <div class="mt-14 p-5 bg-surface-container-low rounded-2xl flex items-center gap-5">
+      <div class="h-11 w-11 bg-white rounded-full flex items-center justify-center shadow-sm shrink-0">
+        <span class="material-symbols-outlined text-secondary">biotech</span>
+      </div>
+      <div class="flex-1">
+        <h4 class="text-sm font-bold">Last Supabase sync</h4>
+        <p id="last-sync" class="text-xs text-on-surface-variant font-mono mt-0.5">never</p>
+      </div>
+      <span class="hidden md:block px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full uppercase tracking-widest">
+        Ready
+      </span>
+    </div>
+  </section>
+
+</main><!-- end #main-content -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     BOTTOM TAB BAR (mobile only)
+     ═══════════════════════════════════════════════════════════════════════ -->
+<nav id="bottom-nav"
+     class="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-surface-container-low/90 backdrop-blur-md border-t border-outline-variant/20
+            flex items-stretch">
+  <button data-screen="dashboard"      class="tab-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-bold transition-colors">
+    <span class="material-symbols-outlined text-[22px]">dashboard</span>
+    Dashboard
+  </button>
+  <button data-screen="raw_stream"     class="tab-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-bold transition-colors">
+    <span class="material-symbols-outlined text-[22px]">terminal</span>
+    Stream
+  </button>
+  <button data-screen="plant_profiles" class="tab-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-bold transition-colors">
+    <span class="material-symbols-outlined text-[22px]">potted_plant</span>
+    Profiles
+  </button>
+  <button data-screen="testing_mode"   class="tab-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-bold transition-colors">
+    <span class="material-symbols-outlined text-[22px]">experiment</span>
+    Testing
+  </button>
+  <button data-screen="settings"       class="tab-btn flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-bold transition-colors">
+    <span class="material-symbols-outlined text-[22px]">settings</span>
+    Settings
+  </button>
+</nav>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     APP JAVASCRIPT
+     ═══════════════════════════════════════════════════════════════════════ -->
+<script>
+/* ─── App state ───────────────────────────────────────────────────────────── */
+const state = {
+  currentScreen: 'dashboard',
+  btConnected: false,
+  arduinoMode: 'auto',       // 'auto' | 'test'
+  activeProfile: 'silvercock',
+  lastReading: null,
+  cmdHistory: [],
+  // Chart data ring buffers (keep last 30 points)
+  tempHistory: [],
+  soilHistory: [],
+  labels: [],
+};
+
+/* ─── Chart.js init ──────────────────────────────────────────────────────── */
+let trendsChart = null;
+
+function initCharts() {
+  const ctx = document.getElementById('chart-trends').getContext('2d');
+  trendsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: state.labels,
+      datasets: [
+        {
+          label: 'Temperature (°C)',
+          data: state.tempHistory,
+          borderColor: '#006d37',
+          backgroundColor: 'rgba(0,109,55,0.08)',
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 2,
+        },
+        {
+          label: 'Soil Moisture (%)',
+          data: state.soilHistory,
+          borderColor: '#336943',
+          backgroundColor: 'rgba(51,105,67,0.07)',
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 300 },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { display: false },
+        y: {
+          grid: { color: 'rgba(0,0,0,0.04)' },
+          ticks: { font: { size: 10 }, color: '#6c7b6d' },
+        },
+      },
+    },
+  });
+}
+
+/* ─── Navigation ─────────────────────────────────────────────────────────── */
+function navigateTo(screenId) {
+  // Hide all screens
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screenId).classList.add('active');
+  state.currentScreen = screenId;
+
+  // Update tab bar active state
+  document.querySelectorAll('.tab-btn, .sidebar-link').forEach(btn => {
+    const isActive = btn.dataset.screen === screenId;
+    btn.classList.toggle('text-primary',  isActive);
+    btn.classList.toggle('bg-primary/10', isActive && btn.classList.contains('sidebar-link'));
+    btn.classList.toggle('text-on-surface-variant', !isActive);
+  });
+}
+
+// Attach nav buttons
+document.querySelectorAll('[data-screen]').forEach(btn => {
+  btn.addEventListener('click', () => navigateTo(btn.dataset.screen));
+});
+
+/* ─── Onboarding ─────────────────────────────────────────────────────────── */
+function initOnboarding() {
+  const seen = localStorage.getItem('fc_onboarding_done');
+  const overlay = document.getElementById('onboarding');
+  if (seen) {
+    overlay.remove(); // Already completed – skip onboarding
+  }
+  document.getElementById('btn-get-started').addEventListener('click', () => {
+    localStorage.setItem('fc_onboarding_done', '1');
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.4s ease';
+    setTimeout(() => overlay.remove(), 400);
+  });
+}
+
+/* ─── Bluetooth connection ───────────────────────────────────────────────── */
+window.handleBtConnect = async function () {
+  if (state.btConnected) {
+    BluetoothService.disconnect();
+    return;
+  }
+  // ── TODO (wiring): BluetoothService is defined in bluetooth.js
+  //    If using Web Serial (classic HC-05), swap BluetoothService.connect()
+  //    for the Serial API call described in bluetooth.js.
+  if (typeof BluetoothService === 'undefined') {
+    appendLog('[ERROR] bluetooth.js not loaded. Open app via a web server (not file://).', 'error');
+    return;
+  }
+  await BluetoothService.connect(onBtData, onBtStatus);
+};
+
+function onBtStatus(status) {
+  state.btConnected = (status === 'connected');
+  const dot   = ['header-dot', 'sidebar-dot'];
+  const label = ['header-bt-label', 'sidebar-conn-label'];
+
+  dot.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'w-2.5 h-2.5 rounded-full ' +
+      (state.btConnected ? 'bg-primary animate-pulse' : status === 'error' ? 'bg-error' : 'bg-outline-variant');
+  });
+  label.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = state.btConnected ? 'Connected' : status === 'error' ? 'Error' : 'Disconnected';
+  });
+
+  const streamStatus = document.getElementById('stream-bt-status');
+  if (streamStatus) streamStatus.textContent = state.btConnected ? 'Flora-GW-01' : 'Disconnected';
+
+  appendLog(state.btConnected ? '[BT] Connected to Arduino.' : `[BT] ${status}.`, state.btConnected ? 'info' : 'warn');
+}
+
+/* ─── Incoming data parser ───────────────────────────────────────────────── */
+function onBtData(line) {
+  // Always append to raw terminal
+  appendLog(line, 'data');
+
+  // Parse structured data lines: "DATA,<temp>,<soil%>,<rain%>,<pump>,<fan>,<heater>,<lid>"
+  if (line.startsWith('DATA,')) {
+    const parts = line.split(',');
+    if (parts.length < 8) return;
+
+    const reading = {
+      temperature:  parseFloat(parts[1]),
+      soil_pct:     parseInt(parts[2]),
+      rain_pct:     parseInt(parts[3]),
+      pump_state:   parts[4],
+      fan_state:    parts[5],
+      heater_state: parts[6],
+      lid_state:    parts[7],
+    };
+    state.lastReading = reading;
+    updateDashboard(reading);
+
+    // ── TODO (wiring): Push to Supabase ──
+    if (typeof SupabaseService !== 'undefined') {
+      SupabaseService.pushReading(reading).then(() => {
+        const el = document.getElementById('last-sync');
+        if (el) el.textContent = new Date().toLocaleTimeString();
+      });
+    }
+  }
+}
+
+/* ─── Dashboard updater ──────────────────────────────────────────────────── */
+function updateDashboard(r) {
+  // Metric cards
+  setText('val-temp', r.temperature.toFixed(1) + '°C');
+  setText('val-soil', r.soil_pct + '%');
+  setText('val-rain', r.rain_pct + '%');
+  setText('last-update', new Date().toLocaleTimeString());
+
+  // Actuator badges
+  setBadge('act-pump',   r.pump_state);
+  setBadge('act-fan',    r.fan_state);
+  setBadge('act-heater', r.heater_state);
+  setBadge('act-lid',    r.lid_state);
+
+  // Wetness gauge arc
+  const arc = document.getElementById('gauge-arc');
+  const valEl = document.getElementById('gauge-val');
+  if (arc && valEl) {
+    const pct = Math.min(100, Math.max(0, r.rain_pct));
+    const circumference = 251;
+    arc.style.strokeDashoffset = circumference - (circumference * pct / 100);
+    valEl.textContent = pct + '%';
+  }
+
+  // Trend chart ring buffer (max 30 points)
+  const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  if (state.tempHistory.length >= 30) {
+    state.tempHistory.shift();
+    state.soilHistory.shift();
+    state.labels.shift();
+  }
+  state.tempHistory.push(r.temperature);
+  state.soilHistory.push(r.soil_pct);
+  state.labels.push(now);
+
+  if (trendsChart) trendsChart.update();
+}
+
+/* ─── Terminal helpers ───────────────────────────────────────────────────── */
+const LOG_COLORS = {
+  info:  'text-primary-fixed',
+  warn:  'text-error-container',
+  error: 'text-error',
+  data:  'text-white/80',
+};
+
+function appendLog(text, type = 'data') {
+  const log = document.getElementById('terminal-log');
+  if (!log) return;
+
+  // Remove the "waiting…" placeholder on first message
+  const placeholder = log.querySelector('.italic');
+  if (placeholder) placeholder.remove();
+
+  const row = document.createElement('div');
+  row.className = 'flex gap-3';
+  row.innerHTML = `
+    <span class="text-white/20 select-none font-mono text-xs shrink-0 pt-0.5">
+      ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' })}
+    </span>
+    <span class="${LOG_COLORS[type] || 'text-white/80'} font-mono text-xs break-all">${escHtml(text)}</span>
+  `;
+  log.appendChild(row);
+
+  const autoScroll = document.getElementById('auto-scroll');
+  if (autoScroll && autoScroll.checked) {
+    log.scrollTop = log.scrollHeight;
+  }
+}
+
+function clearTerminal() {
+  const log = document.getElementById('terminal-log');
+  if (log) log.innerHTML = '<p class="text-white/30 italic">— log cleared —</p>';
+}
+
+function copyTerminal() {
+  const log = document.getElementById('terminal-log');
+  if (log) navigator.clipboard.writeText(log.innerText).catch(() => {});
+}
+
+function sendRawCommand() {
+  const inp = document.getElementById('cmd-input');
+  if (!inp || !inp.value.trim()) return;
+  const cmd = inp.value.trim();
+  if (typeof BluetoothService !== 'undefined') BluetoothService.send(cmd + '\n');
+  appendLog('>> ' + cmd, 'info');
+  if (typeof SupabaseService !== 'undefined') SupabaseService.logCommand(cmd);
+  inp.value = '';
+}
+
+/* ─── Plant Profiles ─────────────────────────────────────────────────────── */
+const PROFILES = {
+  silvercock: { tempHigh: 35, soilDry: 55, label: 'Silvercock', cmd: 'S' },
+  shia:       { tempHigh: 30, soilDry: 35, label: 'Shia',        cmd: 'H' },
+};
+
+function selectProfile(id) {
+  state.activeProfile = id;
+  const p = PROFILES[id];
+
+  // Card highlight
+  Object.keys(PROFILES).forEach(k => {
+    const card  = document.getElementById('card-' + k);
+    const check = document.getElementById('check-' + k + '-wrap') || document.getElementById('check-' + k)?.parentElement;
+    if (!card) return;
+    card.classList.toggle('border-primary', k === id);
+    card.classList.toggle('border-transparent', k !== id);
+  });
+
+  // Thresholds display
+  setText('thresh-temp-high', p.tempHigh);
+  setText('thresh-soil', p.soilDry);
+  setText('active-profile-label', p.label);
+}
+
+function applyProfile() {
+  const p = PROFILES[state.activeProfile];
+  if (typeof BluetoothService !== 'undefined') BluetoothService.send(p.cmd);
+  appendLog(`[PROFILE] Applied ${p.label}: TEMP_HIGH=${p.tempHigh}°C, SOIL_DRY=${p.soilDry}%`, 'info');
+  if (typeof SupabaseService !== 'undefined') SupabaseService.logCommand('PROFILE:' + p.cmd);
+  setText('act-profile', p.label.toUpperCase());
+}
+
+/* ─── Testing mode ───────────────────────────────────────────────────────── */
+function setArduinoMode(mode) {
+  state.arduinoMode = mode;
+  const cmd = mode === 'auto' ? 'a' : 'm';
+  if (typeof BluetoothService !== 'undefined') BluetoothService.send(cmd);
+  appendLog(`[MODE] Switched to ${mode.toUpperCase()}`, 'info');
+
+  // Toggle button styles
+  const btnAuto = document.getElementById('btn-auto-mode');
+  const btnTest = document.getElementById('btn-test-mode');
+  const warn    = document.getElementById('test-warning');
+  if (btnAuto && btnTest) {
+    btnAuto.className = 'px-7 py-2 text-sm font-semibold rounded-lg transition-all ' +
+      (mode === 'auto' ? 'bg-primary text-on-primary shadow-sm' : 'text-slate-500');
+    btnTest.className = 'px-7 py-2 text-sm font-semibold rounded-lg transition-all ' +
+      (mode === 'test' ? 'bg-primary text-on-primary shadow-sm' : 'text-slate-500');
+  }
+  if (warn) warn.classList.toggle('hidden', mode !== 'test');
+
+  // Update mode badge on dashboard
+  const badge = document.getElementById('act-mode');
+  if (badge) {
+    badge.textContent = mode.toUpperCase();
+    badge.className = 'text-[10px] font-bold py-1 px-2 rounded-full self-start ' +
+      (mode === 'auto' ? 'bg-primary-container text-on-primary-container' : 'bg-tertiary-container text-on-tertiary-container');
+  }
+}
+
+function sendTestCmd(char, label) {
+  if (typeof BluetoothService !== 'undefined') BluetoothService.send(char);
+  appendLog(`[TEST] ${label} (cmd: '${char}')`, 'info');
+  if (typeof SupabaseService !== 'undefined') SupabaseService.logCommand(char);
+  addCmdHistoryEntry(label);
+}
+
+function sendTimers() {
+  const pumpMs = document.getElementById('slider-pump').value;
+  const lidMs  = document.getElementById('slider-lid').value;
+  if (typeof BluetoothService !== 'undefined') {
+    BluetoothService.send('T' + pumpMs + '\n');
+    BluetoothService.send('L' + lidMs  + '\n');
+  }
+  appendLog(`[TIMER] Pump=${pumpMs}ms, Lid=${lidMs}ms`, 'info');
+  addCmdHistoryEntry(`Set Timers: Pump=${pumpMs}ms, Lid=${lidMs}ms`);
+}
+
+function updateSlider(which, val) {
+  const label = document.getElementById(which + '-ms-label');
+  if (label) label.textContent = val + 'ms';
+}
+
+function addCmdHistoryEntry(label) {
+  state.cmdHistory.unshift({ label, time: new Date().toLocaleTimeString() });
+  if (state.cmdHistory.length > 10) state.cmdHistory.pop();
+  renderCmdHistory();
+}
+
+function renderCmdHistory() {
+  const ul = document.getElementById('cmd-history');
+  if (!ul) return;
+  ul.innerHTML = state.cmdHistory.map(c => `
+    <li class="flex items-center justify-between py-2 border-b border-outline-variant/10">
+      <span class="text-sm font-medium">${escHtml(c.label)}</span>
+      <span class="font-mono text-[10px] text-on-surface-variant">${escHtml(c.time)}</span>
+    </li>
+  `).join('');
+}
+
+/* ─── Settings ───────────────────────────────────────────────────────────── */
+function saveSettings() {
+  const url  = document.getElementById('inp-supa-url').value;
+  const key  = document.getElementById('inp-supa-key').value;
+  const name = document.getElementById('inp-device-name').value;
+  if (typeof SupabaseService !== 'undefined') SupabaseService.saveConfig(url, key);
+  if (name) localStorage.setItem('fc_device_name', name);
+  appendLog('[SETTINGS] Configuration saved.', 'info');
+  alert('Settings saved!');
+}
+
+function discardSettings() {
+  loadSettings();
+}
+
+function loadSettings() {
+  const url  = localStorage.getItem('fc_supabase_url') || '';
+  const key  = localStorage.getItem('fc_supabase_key') || '';
+  const name = localStorage.getItem('fc_device_name')  || 'Flora-GW-01';
+  const urlEl  = document.getElementById('inp-supa-url');
+  const keyEl  = document.getElementById('inp-supa-key');
+  const nameEl = document.getElementById('inp-device-name');
+  if (urlEl)  urlEl.value  = url;
+  if (keyEl)  keyEl.value  = key;
+  if (nameEl) nameEl.value = name;
+}
+
+function toggleKeyVisibility() {
+  const inp  = document.getElementById('inp-supa-key');
+  const icon = document.getElementById('eye-icon');
+  if (!inp) return;
+  inp.type   = inp.type === 'password' ? 'text' : 'password';
+  icon.textContent = inp.type === 'password' ? 'visibility' : 'visibility_off';
+}
+
+/* ─── Utilities ──────────────────────────────────────────────────────────── */
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+// Update actuator badge color based on value
+function setBadge(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = val;
+  const isOn = ['ON', 'OPEN'].includes(val.toUpperCase());
+  const isMoving = ['MOVING...', 'MOVING_OPEN', 'MOVING_CLOSE', 'MOVING'].some(s => val.toUpperCase().includes(s));
+  el.className = 'text-[10px] font-bold py-1 px-2 rounded-full self-start ' + (
+    isMoving ? 'bg-tertiary-container text-on-tertiary-container' :
+    isOn     ? 'bg-primary-container text-on-primary-container' :
+               'bg-surface-variant text-on-surface-variant'
+  );
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/* ─── Supabase live subscription ─────────────────────────────────────────── */
+// When the dashboard is open, subscribe to remote readings so other users
+// controlling the device via different browsers also see live updates.
+function startSupabaseSubscription() {
+  if (typeof SupabaseService === 'undefined') return;
+  SupabaseService.init();
+  SupabaseService.subscribe(row => {
+    if (state.btConnected) return; // Prefer direct BT data when available
+    updateDashboard({
+      temperature:  row.temperature,
+      soil_pct:     row.soil_pct,
+      rain_pct:     row.rain_pct,
+      pump_state:   row.pump_state,
+      fan_state:    row.fan_state,
+      heater_state: row.heater_state,
+      lid_state:    row.lid_state,
+    });
+  });
+}
+
+/* ─── Boot sequence ──────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  initOnboarding();
+  initCharts();
+  loadSettings();
+  navigateTo('dashboard');
+  startSupabaseSubscription();
+
+  // Restore previously saved profile selection
+  const savedProfile = localStorage.getItem('fc_active_profile') || 'silvercock';
+  selectProfile(savedProfile);
+});
+</script>
+
+</body>
+</html>

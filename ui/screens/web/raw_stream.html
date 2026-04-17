@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FloraCraft | Raw Stream</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "surface-container-high": "#d9eafc",
+                "on-secondary-fixed": "#00210c",
+                "error-container": "#ffdad6",
+                "surface-dim": "#cbdcee",
+                "on-tertiary-container": "#772e14",
+                "surface-bright": "#f7f9ff",
+                "inverse-primary": "#4ae183",
+                "surface-variant": "#d4e4f6",
+                "primary-fixed": "#6bfe9c",
+                "surface-container-highest": "#d4e4f6",
+                "on-error": "#ffffff",
+                "on-secondary": "#ffffff",
+                "on-primary": "#ffffff",
+                "surface-container-lowest": "#ffffff",
+                "surface": "#f7f9ff",
+                "primary-container": "#2ecc71",
+                "background": "#f7f9ff",
+                "secondary": "#336943",
+                "outline-variant": "#bbcbbb",
+                "secondary-container": "#b5f1c0",
+                "primary": "#006d37",
+                "inverse-surface": "#223240",
+                "secondary-fixed": "#b5f1c0",
+                "on-background": "#0d1d2a",
+                "on-surface-variant": "#3d4a3e",
+                "on-secondary-fixed-variant": "#19512d",
+                "on-secondary-container": "#396f48",
+                "outline": "#6c7b6d",
+                "on-error-container": "#93000a",
+                "on-surface": "#0d1d2a",
+                "surface-container-low": "#ecf4ff",
+                "tertiary-fixed-dim": "#ffb59d",
+                "surface-tint": "#006d37",
+                "secondary-fixed-dim": "#9ad4a5",
+                "tertiary": "#98472a",
+                "primary-fixed-dim": "#4ae183",
+                "inverse-on-surface": "#e7f2ff",
+                "error": "#ba1a1a",
+                "on-primary-fixed": "#00210c",
+                "on-tertiary": "#ffffff",
+                "surface-container": "#e2efff",
+                "tertiary-container": "#ff9875",
+                "on-tertiary-fixed-variant": "#793015"
+            },
+            "fontFamily": {
+                "headline": ["Manrope", "sans-serif"],
+                "body": ["Inter", "sans-serif"],
+                "mono": ["JetBrains Mono", "monospace"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .mono-font { font-family: 'JetBrains Mono', monospace; }
+        .sidebar-active { border-right-width: 4px; }
+        .glass-effect { backdrop-filter: blur(20px); }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar Integration -->
+<aside class="fixed left-0 top-0 bottom-0 z-40 flex flex-col h-screen w-64 bg-slate-50 dark:bg-slate-900 border-r-0 font-['Manrope'] font-medium tracking-tight text-sm">
+<div class="p-6">
+<h1 class="text-2xl font-bold font-['Manrope'] text-emerald-800 dark:text-emerald-300">FloraCraft</h1>
+<p class="text-xs text-slate-500 mt-1">Precision IoT</p>
+</div>
+<nav class="flex-1 px-4 space-y-2 mt-4">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 transition-colors duration-200 scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-emerald-700 dark:text-emerald-400 font-bold border-r-4 border-emerald-600 bg-slate-100 dark:bg-slate-800/50 transition-colors duration-200 scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+                Raw Stream
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 transition-colors duration-200 scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="potted_plant">potted_plant</span>
+                Plant Profiles
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 transition-colors duration-200 scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+                Testing
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 transition-colors duration-200 scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+</nav>
+<div class="px-4 py-6 border-t border-slate-100 dark:border-slate-800">
+<button class="w-full bg-primary-container text-on-primary-container py-3 rounded-xl font-bold mb-6 flex items-center justify-center gap-2 scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-lg" data-icon="add">add</span>
+                Add New Sensor
+            </button>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+                    Help
+                </a>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                    Logout
+                </a>
+</div>
+</div>
+</aside>
+<!-- TopAppBar Integration -->
+<header class="flex items-center justify-between px-8 sticky top-0 z-30 ml-64 w-[calc(100%-16rem)] h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm shadow-emerald-900/5 font-['Inter'] text-sm tracking-wide">
+<div class="flex items-center bg-slate-100 dark:bg-slate-900 px-4 py-2 rounded-full w-96">
+<span class="material-symbols-outlined text-slate-500 mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-on-surface w-full" placeholder="Search logs or devices..." type="text"/>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-slate-500 hover:text-emerald-600 transition-opacity flex items-center gap-1">
+<span class="material-symbols-outlined" data-icon="cloud_done">cloud_done</span>
+<span class="text-xs font-semibold">SYNCED</span>
+</button>
+<button class="text-slate-500 hover:text-emerald-600 transition-opacity relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-slate-200">
+<div class="text-right">
+<p class="text-xs font-bold text-on-surface">Admin User</p>
+<p class="text-[10px] text-slate-500">Root Access</p>
+</div>
+<span class="material-symbols-outlined text-3xl text-slate-400" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-64 p-8 flex flex-col gap-6 min-h-[calc(100vh-4rem)]">
+<!-- Connection Status Card -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<div class="md:col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl p-5 flex items-center justify-between border-l-4 border-primary shadow-sm">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-primary-container/20 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="bluetooth_connected" style="font-variation-settings: 'FILL' 1;">bluetooth_connected</span>
+</div>
+<div>
+<h2 class="font-headline font-bold text-lg text-on-surface tracking-tight">Bluetooth Connected: Flora-GW-01</h2>
+<p class="text-xs text-on-surface-variant font-body">Gateway Active • RSSI: -42dBm • Frequency: 2.4GHz</p>
+</div>
+</div>
+<div class="hidden sm:flex items-center gap-3">
+<span class="px-3 py-1 bg-primary-container text-on-primary-container rounded-full text-[10px] font-bold tracking-widest uppercase">Stable</span>
+<span class="text-xs font-mono text-slate-400">UUID: 4F92-XA91-001L</span>
+</div>
+</div>
+<!-- Quick Stats Ticker -->
+<div class="md:col-span-12 lg:col-span-4 bg-surface-container-low rounded-xl p-5 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[10px] font-bold text-secondary uppercase tracking-widest">Data Ingest</span>
+<span class="text-xl font-headline font-extrabold text-on-surface">1.2 MB/s</span>
+</div>
+<div class="h-10 w-24 flex items-end gap-1">
+<div class="w-1 bg-primary h-[40%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[60%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[55%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[90%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[70%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[85%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[100%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[60%] rounded-t-sm"></div>
+</div>
+</div>
+</section>
+<!-- Log Window Terminal Section -->
+<section class="flex-1 flex flex-col bg-inverse-surface rounded-xl overflow-hidden shadow-2xl">
+<!-- Terminal Header -->
+<div class="flex items-center justify-between px-6 py-3 bg-slate-900 border-b border-slate-800">
+<div class="flex items-center gap-2">
+<div class="flex gap-1.5 mr-4">
+<div class="w-3 h-3 rounded-full bg-error/40"></div>
+<div class="w-3 h-3 rounded-full bg-tertiary-container/40"></div>
+<div class="w-3 h-3 rounded-full bg-primary-container/40"></div>
+</div>
+<span class="material-symbols-outlined text-slate-500 text-sm" data-icon="terminal">terminal</span>
+<span class="text-xs font-mono text-slate-400 font-medium">flora_stream_v2.0.log</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-[10px] font-mono text-emerald-500/80 animate-pulse">● STREAMING</span>
+<span class="text-[10px] font-mono text-slate-500">2,481 lines</span>
+</div>
+</div>
+<!-- Scrollable Log Area -->
+<div class="flex-1 p-6 font-mono text-sm overflow-y-auto bg-slate-950/50 custom-scrollbar">
+<div class="space-y-1.5">
+<div class="flex gap-4">
+<span class="text-slate-600 shrink-0">14:20:01.042</span>
+<span class="text-primary-fixed shrink-0">[INFO]</span>
+<span class="text-slate-300">Handshake initiated with BLE Node: 0x4A:2F:90</span>
+</div>
+<div class="flex gap-4">
+<span class="text-slate-600 shrink-0">14:20:01.128</span>
+<span class="text-primary-fixed shrink-0">[INFO]</span>
+<span class="text-slate-300">Authentication successful. Protocol v4.2.</span>
+</div>
+<div class="flex gap-4">
+<span class="text-slate-600 shrink-0">14:20:02.485</span>
+<span class="text-secondary-fixed shrink-0">[DATA]</span>
+<span class="text-blue-300 whitespace-pre">{"sensor_id": "temp_01", "val": 24.8, "unit": "C", "timestamp": 1715842802}</span>
+</div>
+<div class="flex gap-4">
+<span class="text-slate-600 shrink-0">14:20:02.492</span>
+<span class="text-secondary-fixed shrink-0">[DATA]</span>
+<span class="text-blue-300 whitespace-pre">{"sensor_id": "hum_01", "val": 62.1, "unit": "%", "timestamp": 1715842802}</span>
+</div>
+<div class="flex gap-4">
+<span class="text-slate-600 shrink-0">14:20:03.010</span>
+<span class="text-tertiary-fixed shrink-0">[WARN]</span>
+<span class="text-tertiary-container">Battery drop detected on secondary node [4.2v -&gt; 3.9v]</span>
+</div>
+<div class="flex gap-4">
+<span class="text-slate-600 shrink-0">14:20:04.221</span>
+<span class="text-secondary-fixed shrink-0">[DATA]</span>
+<span class="text-blue-300 whitespace-pre">{"sensor_id": "lux_01", "val": 1240, "unit": "lx", "timestamp": 1715842804}</span>
+</div>
+<div class="flex gap-4">
+<span class="text-slate-600 shrink-0">14:20:05.115</span>
+<span class="text-error-container shrink-0">[ERR!]</span>
+<span class="text-error font-bold">Checksum mismatch in packet 8420-A. Retrying...</span>
+</div>
+<div class="flex gap-4">
+<span class="text-slate-600 shrink-0">14:20:05.150</span>
+<span class="text-primary-fixed shrink-0">[INFO]</span>
+<span class="text-slate-300">Packet 8420-A recovered. Stream integrity 100%.</span>
+</div>
+<div class="flex gap-4">
+<span class="text-slate-600 shrink-0">14:20:06.002</span>
+<span class="text-secondary-fixed shrink-0">[DATA]</span>
+<span class="text-blue-300 whitespace-pre">{"sensor_id": "soil_01", "val": 0.42, "unit": "m3/m3", "timestamp": 1715842806}</span>
+</div>
+<div class="flex gap-4">
+<span class="text-slate-600 shrink-0">14:20:07.881</span>
+<span class="text-slate-500 shrink-0">[SYS]</span>
+<span class="text-slate-500 italic">Heartbeat pulse confirmed. System uptime: 14d 02h 11m</span>
+</div>
+<div class="mt-4 border-l-2 border-primary pl-4 py-2 bg-primary/5">
+<span class="text-primary-fixed font-bold">&gt;&gt; USER_CMD_OVERRIDE: FLUSH_BUFFERS</span>
+</div>
+</div>
+</div>
+<!-- Terminal Controls -->
+<div class="px-6 py-4 bg-slate-900 flex flex-wrap items-center justify-between gap-4 border-t border-slate-800">
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="block">block</span>
+                        Clear
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span>
+                        Copy
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-xs font-semibold shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-sm" data-icon="download">download</span>
+                        Download Log
+                    </button>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-3">
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Auto-scroll</span>
+<button class="w-10 h-5 bg-primary-container rounded-full relative flex items-center px-1">
+<div class="w-3.5 h-3.5 bg-on-primary-container rounded-full absolute right-1"></div>
+</button>
+</div>
+<div class="h-6 w-px bg-slate-800"></div>
+<div class="flex items-center gap-2 text-slate-500">
+<span class="material-symbols-outlined text-lg" data-icon="settings_input_component">settings_input_component</span>
+<span class="text-xs font-mono">115200 Baud</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Command Input Section -->
+<section class="bg-surface-container-lowest rounded-xl p-6 shadow-sm">
+<div class="flex flex-col gap-4">
+<label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Send Raw Command String</label>
+<div class="flex gap-4">
+<div class="relative flex-1">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-md"></div>
+<input class="w-full bg-surface-container-high border-none rounded-xl py-4 pl-6 pr-4 font-mono text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400" placeholder="e.g. GET_SENSOR_CALIBRATION --id=temp_01" type="text"/>
+</div>
+<button class="bg-primary text-on-primary px-8 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-opacity active:scale-95">
+                        Send
+                        <span class="material-symbols-outlined" data-icon="send">send</span>
+</button>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="text-[10px] text-slate-500 font-bold uppercase py-1">Quick Commands:</span>
+<button class="text-[10px] px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-md font-mono text-slate-600 transition-colors">QUERY_ALL</button>
+<button class="text-[10px] px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-md font-mono text-slate-600 transition-colors">SET_INTERVAL_60S</button>
+<button class="text-[10px] px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-md font-mono text-slate-600 transition-colors">RESET_BT_STACK</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Visual Decor for Industrial Feel -->
+<div class="fixed bottom-8 right-8 opacity-10 pointer-events-none select-none">
+<h3 class="font-headline font-extrabold text-9xl tracking-tighter text-on-surface">FC-01</h3>
+</div>
+</body></html>

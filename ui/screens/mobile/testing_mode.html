@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FloraCraft - Testing &amp; Calibration</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#00210c",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#793015",
+                        "on-primary-fixed-variant": "#005228",
+                        "surface-container-highest": "#d4e4f6",
+                        "primary": "#006d37",
+                        "primary-fixed": "#6bfe9c",
+                        "on-secondary-container": "#396f48",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#9ad4a5",
+                        "tertiary": "#98472a",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#f7f9ff",
+                        "secondary-container": "#b5f1c0",
+                        "on-tertiary-container": "#772e14",
+                        "on-primary-container": "#005027",
+                        "on-background": "#0d1d2a",
+                        "tertiary-fixed-dim": "#ffb59d",
+                        "on-secondary-fixed-variant": "#19512d",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#390c00",
+                        "secondary": "#336943",
+                        "surface-variant": "#d4e4f6",
+                        "primary-container": "#2ecc71",
+                        "surface-container": "#e2efff",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#4ae183",
+                        "surface": "#f7f9ff",
+                        "surface-container-low": "#ecf4ff",
+                        "background": "#f7f9ff",
+                        "inverse-surface": "#223240",
+                        "outline": "#6c7b6d",
+                        "tertiary-container": "#ff9875",
+                        "tertiary-fixed": "#ffdbd0",
+                        "on-primary-fixed": "#00210c",
+                        "on-surface": "#0d1d2a",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#006d37",
+                        "on-surface-variant": "#3d4a3e",
+                        "outline-variant": "#bbcbbb",
+                        "inverse-on-surface": "#e7f2ff",
+                        "secondary-fixed": "#b5f1c0",
+                        "surface-container-high": "#d9eafc",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#4ae183",
+                        "surface-dim": "#cbdcee"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .glass-panel {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen pb-32">
+<!-- TopAppBar Shell -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 w-full bg-slate-50 dark:bg-slate-900">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-green-700 dark:text-green-400" data-icon="psychology_alt">psychology_alt</span>
+<h1 class="text-xl font-bold tracking-tight text-green-800 dark:text-green-300">Testing &amp; Calibration</h1>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] font-bold tracking-widest text-green-700 bg-green-100/50 px-2 py-1 rounded-full">ONLINE</span>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-5xl mx-auto space-y-8">
+<!-- Mode Switcher & Status -->
+<section class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="inline-flex p-1 bg-surface-container-high rounded-xl w-fit">
+<button class="px-8 py-2 text-sm font-semibold text-slate-500 rounded-lg">AUTO</button>
+<button class="px-8 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg shadow-sm">TEST</button>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 bg-error-container text-on-error-container rounded-xl">
+<span class="material-symbols-outlined" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+<p class="text-sm font-semibold tracking-tight">Automation is paused. Manual commands only.</p>
+</div>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left Column: Timers -->
+<div class="lg:col-span-5 space-y-8">
+<div class="bg-surface-container-lowest p-6 rounded-[24px] border border-outline-variant/15 transition-all">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-primary" data-icon="timer">timer</span>
+<h2 class="text-xl font-bold">Calibration Timers</h2>
+</div>
+<div class="space-y-8">
+<!-- Slider 1 -->
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Pump Run Duration</label>
+<span class="font-mono text-lg font-bold text-primary">2500ms</span>
+</div>
+<div class="relative w-full h-2 bg-surface-container-high rounded-full">
+<div class="absolute left-0 top-0 h-full w-[60%] bg-gradient-to-r from-primary to-primary-container rounded-full"></div>
+<div class="absolute left-[60%] top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-white border-4 border-primary rounded-full shadow-lg cursor-pointer"></div>
+</div>
+</div>
+<!-- Slider 2 -->
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Lid Transition Time</label>
+<span class="font-mono text-lg font-bold text-primary">4800ms</span>
+</div>
+<div class="relative w-full h-2 bg-surface-container-high rounded-full">
+<div class="absolute left-0 top-0 h-full w-[45%] bg-gradient-to-r from-primary to-primary-container rounded-full"></div>
+<div class="absolute left-[45%] top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-white border-4 border-primary rounded-full shadow-lg cursor-pointer"></div>
+</div>
+</div>
+<button class="w-full mt-4 py-4 bg-primary text-on-primary font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+                            Send Timers
+                        </button>
+</div>
+</div>
+<!-- History List -->
+<div class="bg-surface-container-low p-6 rounded-[24px]">
+<h3 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-6">Recent Commands</h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between py-2 border-b border-outline-variant/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="bolt">bolt</span>
+<span class="text-sm font-medium">Test Pump</span>
+</div>
+<span class="font-mono text-[10px] text-on-surface-variant">14:22:01</span>
+</div>
+<div class="flex items-center justify-between py-2 border-b border-outline-variant/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="open_in_full">open_in_full</span>
+<span class="text-sm font-medium">Open Lid</span>
+</div>
+<span class="font-mono text-[10px] text-on-surface-variant">14:19:45</span>
+</div>
+<div class="flex items-center justify-between py-2">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-error" data-icon="stop_circle">stop_circle</span>
+<span class="text-sm font-medium">Emergency Stop</span>
+</div>
+<span class="font-mono text-[10px] text-on-surface-variant">14:15:22</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Manual Test Grid -->
+<div class="lg:col-span-7">
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+<!-- Manual Buttons -->
+<button class="aspect-square flex flex-col items-center justify-center gap-4 bg-surface-container-lowest rounded-3xl border-l-4 border-primary hover:bg-surface-bright transition-all shadow-sm">
+<span class="material-symbols-outlined text-primary scale-125" data-icon="water_drop">water_drop</span>
+<span class="text-sm font-bold">Test Pump</span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center gap-4 bg-surface-container-lowest rounded-3xl border-l-4 border-primary hover:bg-surface-bright transition-all shadow-sm">
+<span class="material-symbols-outlined text-primary scale-125" data-icon="air">air</span>
+<span class="text-sm font-bold">Test Fan</span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center gap-4 bg-surface-container-lowest rounded-3xl border-l-4 border-primary hover:bg-surface-bright transition-all shadow-sm">
+<span class="material-symbols-outlined text-primary scale-125" data-icon="heat_glow">heat</span>
+<span class="text-sm font-bold">Test Heater</span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center gap-4 bg-surface-container-lowest rounded-3xl border-l-4 border-secondary hover:bg-surface-bright transition-all shadow-sm">
+<span class="material-symbols-outlined text-secondary scale-125" data-icon="keyboard_arrow_up">keyboard_arrow_up</span>
+<span class="text-sm font-bold">Open Lid</span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center gap-4 bg-surface-container-lowest rounded-3xl border-l-4 border-secondary hover:bg-surface-bright transition-all shadow-sm">
+<span class="material-symbols-outlined text-secondary scale-125" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+<span class="text-sm font-bold">Close Lid</span>
+</button>
+<button class="aspect-square flex flex-col items-center justify-center gap-4 bg-error-container/30 rounded-3xl border-l-4 border-error hover:bg-error-container/50 transition-all shadow-sm group">
+<span class="material-symbols-outlined text-error scale-125 group-active:scale-110" data-icon="cancel" style="font-variation-settings: 'FILL' 1;">cancel</span>
+<span class="text-sm font-bold text-on-error-container">Stop All</span>
+</button>
+</div>
+<div class="mt-8 flex items-start gap-3 p-6 bg-surface-container-high rounded-2xl border-l-2 border-outline-variant">
+<span class="material-symbols-outlined text-outline" data-icon="info">info</span>
+<p class="text-sm text-on-surface-variant font-medium leading-relaxed italic">
+                        Auto-off uses configured timers. Each manual activation will run the component for its specific calibrated duration before disengaging.
+                    </p>
+</div>
+<!-- Technical Visual -->
+<div class="mt-8 relative overflow-hidden rounded-[24px] h-64 group">
+<img alt="Greenhouse technology" class="w-full h-full object-cover grayscale opacity-40" data-alt="Technical schematic overlay on a macro photo of an automated greenhouse irrigation system and sensors with soft green lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAACKdG5fyiiWfdEJIKBQM4KTHa3Y7Ntz2a8G_uuR8SfAcSbgar-xpfOis5_XZ88vWz-VAVPMfs028M02-_kfbBUAUILjaJIEzWAYFXoY1EVj0q-Ks9pBPj_HF0BzLeOog5UqSdugvI9z4Ks8qVkNfzXZVZVUJDvNZI4hxG6f1SjnK2ePDUEtjPoPQaZn5GUGr0ew8GYCRD-cFMRU76SVBxW9UlmJY91E6TCfvaqcQOUTPT_0BxDxd4QwWu_4tJh0JRj2VSbw5WUxyN"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent"></div>
+<div class="absolute bottom-6 left-6">
+<span class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-full border border-primary/20">HARDWARE LAYER v2.4</span>
+<p class="mt-2 text-on-surface font-headline font-bold text-lg">Real-time IO Stream</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar Shell -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 z-50 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.04)]">
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-5 py-2" href="#">
+<span class="material-symbols-outlined" data-icon="sensors">sensors</span>
+<span class="text-[11px] font-semibold font-inter uppercase tracking-wider mt-1">Stream</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-5 py-2" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[11px] font-semibold font-inter uppercase tracking-wider mt-1">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-5 py-2" href="#">
+<span class="material-symbols-outlined" data-icon="potted_plant">potted_plant</span>
+<span class="text-[11px] font-semibold font-inter uppercase tracking-wider mt-1">Profiles</span>
+</a>
+<!-- Active Tab: Testing -->
+<a class="flex flex-col items-center justify-center bg-green-100/50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-2xl px-5 py-2 scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="biotech" style="font-variation-settings: 'FILL' 1;">biotech</span>
+<span class="text-[11px] font-semibold font-inter uppercase tracking-wider mt-1">Testing</span>
+</a>
+</nav>
+</body></html>
