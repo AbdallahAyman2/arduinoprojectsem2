@@ -50,6 +50,8 @@ const int RAIN_DRY_VALUE   = 1020;
 const int RAIN_WET_VALUE   = 200;
 
 // ── Test duration (ms) – adjustable via 'T<ms>\n' command ───────────────────
+// Default of 1350 ms matches the OPEN_TIME in floracraft_auto.ino so a single
+// test run exercises the full lid-open stroke without over-driving the motor.
 unsigned long testDuration = 1350;
 
 // ── Per-actuator timer tracking ──────────────────────────────────────────────

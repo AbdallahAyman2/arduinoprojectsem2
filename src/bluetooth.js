@@ -112,7 +112,7 @@ const BluetoothService = (() => {
     try {
       const encoded = new TextEncoder().encode(data);
       await _txChar.writeValue(encoded);
-      console.log('[BT] TX →', data.replace('\n', '\\n'));
+      console.log('[BT] TX →', data.replace(/\n/g, '\\n'));
     } catch (err) {
       console.error('[BT] send error:', err);
     }
