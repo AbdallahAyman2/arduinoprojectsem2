@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FloraCraft | Testing &amp; Calibration</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;700;800&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#d9eafc",
+                    "on-secondary-fixed": "#00210c",
+                    "error-container": "#ffdad6",
+                    "surface-dim": "#cbdcee",
+                    "on-tertiary-container": "#772e14",
+                    "surface-bright": "#f7f9ff",
+                    "inverse-primary": "#4ae183",
+                    "surface-variant": "#d4e4f6",
+                    "primary-fixed": "#6bfe9c",
+                    "surface-container-highest": "#d4e4f6",
+                    "on-error": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "surface": "#f7f9ff",
+                    "primary-container": "#2ecc71",
+                    "background": "#f7f9ff",
+                    "secondary": "#336943",
+                    "outline-variant": "#bbcbbb",
+                    "secondary-container": "#b5f1c0",
+                    "primary": "#006d37",
+                    "inverse-surface": "#223240",
+                    "secondary-fixed": "#b5f1c0",
+                    "on-primary-container": "#005027",
+                    "on-tertiary-fixed": "#390c00",
+                    "on-primary-fixed-variant": "#005228",
+                    "tertiary-fixed": "#ffdbd0",
+                    "on-background": "#0d1d2a",
+                    "on-surface-variant": "#3d4a3e",
+                    "on-secondary-fixed-variant": "#19512d",
+                    "on-secondary-container": "#396f48",
+                    "outline": "#6c7b6d",
+                    "on-error-container": "#93000a",
+                    "on-surface": "#0d1d2a",
+                    "surface-container-low": "#ecf4ff",
+                    "tertiary-fixed-dim": "#ffb59d",
+                    "surface-tint": "#006d37",
+                    "secondary-fixed-dim": "#9ad4a5",
+                    "tertiary": "#98472a",
+                    "primary-fixed-dim": "#4ae183",
+                    "inverse-on-surface": "#e7f2ff",
+                    "error": "#ba1a1a",
+                    "on-primary-fixed": "#00210c",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#e2efff",
+                    "tertiary-container": "#ff9875",
+                    "on-tertiary-fixed-variant": "#793015"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"],
+                    "mono": ["JetBrains Mono"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 bottom-0 z-40 flex flex-col h-screen w-64 border-r-0 bg-slate-50 dark:bg-slate-900 font-['Manrope'] font-medium tracking-tight text-sm">
+<div class="p-8">
+<div class="text-2xl font-bold font-['Manrope'] text-emerald-800 dark:text-emerald-300">FloraCraft</div>
+<div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-1">Precision IoT</div>
+</div>
+<nav class="flex-1 px-4 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 dark:hover:bg-slate-800/80" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 dark:hover:bg-slate-800/80" href="#">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+<span>Raw Stream</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 dark:hover:bg-slate-800/80" href="#">
+<span class="material-symbols-outlined" data-icon="potted_plant">potted_plant</span>
+<span>Plant Profiles</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-emerald-700 dark:text-emerald-400 font-bold border-r-4 border-emerald-600 bg-slate-200/50 dark:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+<span>Testing</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 dark:hover:bg-slate-800/80" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="px-6 py-6 border-t border-slate-200/50 dark:border-slate-800/50">
+<button class="w-full py-3 bg-primary text-on-primary rounded-xl font-bold flex items-center justify-center gap-2 scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                Add New Sensor
+            </button>
+</div>
+<div class="px-4 pb-8 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-emerald-600 text-xs" href="#">
+<span class="material-symbols-outlined text-base" data-icon="help">help</span>
+<span>Help</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-emerald-600 text-xs" href="#">
+<span class="material-symbols-outlined text-base" data-icon="logout">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="ml-64 min-h-screen bg-surface">
+<!-- TopAppBar -->
+<header class="flex items-center justify-between px-8 sticky top-0 z-30 w-full h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm shadow-emerald-900/5">
+<div class="flex items-center gap-6">
+<div class="relative flex items-center bg-surface-container-high rounded-full p-1 w-48">
+<button class="flex-1 py-1 text-xs font-bold text-on-surface-variant z-10">AUTO</button>
+<button class="flex-1 py-1 text-xs font-bold text-on-primary z-10">TEST</button>
+<div class="absolute right-1 top-1 bottom-1 w-1/2 bg-primary rounded-full transition-all"></div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center bg-surface-container-high px-4 py-1.5 rounded-full text-xs font-medium text-on-surface-variant">
+<span class="material-symbols-outlined text-sm mr-2" data-icon="search">search</span>
+<span>Search parameters...</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-500 hover:text-emerald-600 cursor-pointer" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-emerald-600" data-icon="cloud_done">cloud_done</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border-2 border-primary-container">
+<img class="w-full h-full object-cover" data-alt="portrait of a professional technician in a high-tech lab setting with soft industrial lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnUCaMoGG0rsAGZ2fvsV5LaBut-cHU35F57Hm4_WVdR1xBKxU65ldvauUi0ijRgPk7xahai2mz87YEUpzN5bWdByMggBSclBTT3gN8spEmPBD4PMMZPgZpvUGbmLxCY8F4TYf0pGRdeObKSb4Er2PQ01kKM2oQ7nTsytN2UxgIb_b1loKuV5v2Z124sPywaKK3nXIZe2H3r736wg6YZr8h43Q_MTJHyWk_CfA0C4H8q6DOKzZOnjThyoUX2noBtzbE53-y7S4gxt0l"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Warning Banner -->
+<div class="bg-error text-on-error px-8 py-2 flex items-center gap-3 text-sm font-medium tracking-wide">
+<span class="material-symbols-outlined text-lg" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+<span>MANUAL TEST MODE ACTIVE: Automatic environmental protocols are suspended. Calibration safety locks are engaged.</span>
+</div>
+<div class="p-8 max-w-7xl mx-auto space-y-8">
+<!-- Dashboard Grid -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Left Column: Calibration & Controls -->
+<div class="col-span-12 lg:col-span-8 space-y-8">
+<!-- Calibration Timers -->
+<section class="bg-surface-container-lowest p-8 rounded-xl border-l-4 border-primary">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h2 class="text-xl font-extrabold text-on-surface tracking-tight">Calibration Timers</h2>
+<p class="text-xs text-on-surface-variant opacity-70">Adjust millisecond precision for mechanical actuators</p>
+</div>
+<button class="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm" data-icon="restore">restore</span>
+                                RESET TO DEFAULTS
+                            </button>
+</div>
+<div class="space-y-10">
+<!-- Slider 1 -->
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<label class="text-sm font-semibold text-on-surface">Pump Run Duration</label>
+<span class="font-mono text-primary bg-primary-container/20 px-2 py-0.5 rounded text-sm">4500ms</span>
+</div>
+<div class="relative h-2 bg-surface-container-high rounded-full">
+<div class="absolute h-full w-[45%] bg-primary rounded-full"></div>
+<div class="absolute top-1/2 left-[45%] -translate-y-1/2 w-6 h-6 bg-white border-4 border-primary rounded-full shadow-lg cursor-pointer"></div>
+</div>
+<div class="flex justify-between text-[10px] text-on-surface-variant/50 uppercase font-bold">
+<span>0ms</span>
+<span>10000ms</span>
+</div>
+</div>
+<!-- Slider 2 -->
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<label class="text-sm font-semibold text-on-surface">Lid Transition Time</label>
+<span class="font-mono text-primary bg-primary-container/20 px-2 py-0.5 rounded text-sm">1250ms</span>
+</div>
+<div class="relative h-2 bg-surface-container-high rounded-full">
+<div class="absolute h-full w-[12.5%] bg-primary rounded-full"></div>
+<div class="absolute top-1/2 left-[12.5%] -translate-y-1/2 w-6 h-6 bg-white border-4 border-primary rounded-full shadow-lg cursor-pointer"></div>
+</div>
+<div class="flex justify-between text-[10px] text-on-surface-variant/50 uppercase font-bold">
+<span>0ms</span>
+<span>10000ms</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Manual Overrides Grid -->
+<section>
+<h2 class="text-lg font-extrabold text-on-surface mb-6 flex items-center gap-2">
+                            Manual Actuator Overrides
+                            <span class="h-2 w-2 rounded-full bg-error animate-pulse"></span>
+</h2>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<!-- Pump -->
+<button class="aspect-square flex flex-col items-center justify-center gap-4 bg-surface-container-lowest rounded-xl hover:bg-primary group transition-all duration-300">
+<div class="p-4 rounded-full bg-surface-container-high group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-3xl text-primary group-hover:text-white" data-icon="water_drop">water_drop</span>
+</div>
+<span class="text-xs font-bold text-on-surface-variant group-hover:text-white uppercase tracking-widest">Test Pump</span>
+</button>
+<!-- Fan -->
+<button class="aspect-square flex flex-col items-center justify-center gap-4 bg-surface-container-lowest rounded-xl hover:bg-primary group transition-all duration-300">
+<div class="p-4 rounded-full bg-surface-container-high group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-3xl text-primary group-hover:text-white" data-icon="air">air</span>
+</div>
+<span class="text-xs font-bold text-on-surface-variant group-hover:text-white uppercase tracking-widest">Run Fan</span>
+</button>
+<!-- Heater -->
+<button class="aspect-square flex flex-col items-center justify-center gap-4 bg-surface-container-lowest rounded-xl hover:bg-primary group transition-all duration-300">
+<div class="p-4 rounded-full bg-surface-container-high group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-3xl text-primary group-hover:text-white" data-icon="thermostat">thermostat</span>
+</div>
+<span class="text-xs font-bold text-on-surface-variant group-hover:text-white uppercase tracking-widest">Heater On</span>
+</button>
+<!-- Lid -->
+<button class="aspect-square flex flex-col items-center justify-center gap-4 bg-surface-container-lowest rounded-xl hover:bg-primary group transition-all duration-300">
+<div class="p-4 rounded-full bg-surface-container-high group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-3xl text-primary group-hover:text-white" data-icon="vertical_align_center">vertical_align_center</span>
+</div>
+<span class="text-xs font-bold text-on-surface-variant group-hover:text-white uppercase tracking-widest">Toggle Lid</span>
+</button>
+</div>
+</section>
+</div>
+<!-- Right Column: History & Live Feed -->
+<div class="col-span-12 lg:col-span-4 space-y-8">
+<!-- Hardware Status -->
+<div class="bg-inverse-surface text-inverse-on-surface p-6 rounded-xl space-y-6">
+<h3 class="text-xs font-bold uppercase tracking-[0.2em] opacity-60">System Health</h3>
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-sm">Main MCU</span>
+<span class="text-[10px] bg-primary-container text-on-primary-container px-2 py-0.5 rounded-full font-bold">STABLE</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-sm">Sensor Mesh</span>
+<span class="text-[10px] bg-primary-container text-on-primary-container px-2 py-0.5 rounded-full font-bold">SYNCED</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-sm">Relay Array</span>
+<span class="text-[10px] bg-tertiary-container text-on-tertiary-container px-2 py-0.5 rounded-full font-bold">MANUAL</span>
+</div>
+</div>
+<div class="pt-4 border-t border-white/10">
+<img class="w-full h-32 object-cover rounded-lg opacity-50 grayscale hover:grayscale-0 transition-all cursor-crosshair" data-alt="abstract close up of a printed circuit board with glowing green leds and intricate copper paths" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7YFsIu_BgamVAwJUB1_1LEK_d7IBJI-PRVje8Vbm3yfrjfW7Za626HHuIDaCHFPaJmsXO3mVh9wUVUzrWu4UIT-VNqOhnkFuYdkpjAlLWUd9Z3D3OhWaReaHLsPQMWst7Rlieobn6miZ-gzNEj8A-Ix7nDlwzy-HmbeIu3sUtehPUHh_-KJRnHIEnKIF578WUBxtVgFnwWWAZ9LbXBGXOU_kXqoKMl94_Fz0FigLTC70-feSvAqrHMam17fIhnUXinwvsrhNLaJXu"/>
+</div>
+</div>
+<!-- Recent Command History -->
+<section class="bg-surface-container-low rounded-xl flex flex-col h-full min-h-[400px]">
+<div class="p-6 border-b border-surface-variant">
+<h2 class="text-sm font-extrabold text-on-surface">Recent Command History</h2>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-3">
+<!-- Command 1 -->
+<div class="bg-surface-container-lowest p-3 rounded-lg flex gap-3 items-start border-l-2 border-primary-container shadow-sm">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="check_circle">check_circle</span>
+<div class="flex-1">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold font-mono">CMD_PUMP_ST</span>
+<span class="text-[10px] text-on-surface-variant opacity-60">14:22:01</span>
+</div>
+<p class="text-[11px] mt-1 text-on-surface-variant">Actuator triggered: 4500ms run time successful.</p>
+</div>
+</div>
+<!-- Command 2 -->
+<div class="bg-surface-container-lowest p-3 rounded-lg flex gap-3 items-start border-l-2 border-tertiary shadow-sm">
+<span class="material-symbols-outlined text-tertiary text-xl" data-icon="pending">pending</span>
+<div class="flex-1">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold font-mono">CMD_HEAT_ON</span>
+<span class="text-[10px] text-on-surface-variant opacity-60">14:20:45</span>
+</div>
+<p class="text-[11px] mt-1 text-on-surface-variant">Override: Heating element engaged (User 01)</p>
+</div>
+</div>
+<!-- Command 3 -->
+<div class="bg-surface-container-lowest p-3 rounded-lg flex gap-3 items-start border-l-2 border-primary-container shadow-sm">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="check_circle">check_circle</span>
+<div class="flex-1">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold font-mono">CAL_LID_VAL</span>
+<span class="text-[10px] text-on-surface-variant opacity-60">14:15:30</span>
+</div>
+<p class="text-[11px] mt-1 text-on-surface-variant">Calibration updated: Transition offset -12ms</p>
+</div>
+</div>
+<!-- Command 4 -->
+<div class="bg-surface-container-lowest p-3 rounded-lg flex gap-3 items-start border-l-2 border-error shadow-sm">
+<span class="material-symbols-outlined text-error text-xl" data-icon="error">error</span>
+<div class="flex-1">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold font-mono">ERR_FAN_01</span>
+<span class="text-[10px] text-on-surface-variant opacity-60">13:58:12</span>
+</div>
+<p class="text-[11px] mt-1 text-on-surface-variant">Hardware stall detected: Fan motor 1 RPM below threshold.</p>
+</div>
+</div>
+</div>
+<div class="p-4 bg-surface-container-high/50">
+<button class="w-full py-2 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">
+                                View Full Telemetry Log
+                            </button>
+</div>
+</section>
+</div>
+</div>
+<!-- Bottom Data Strip -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="bg-surface-container-lowest p-6 rounded-xl flex items-center gap-6">
+<div class="w-12 h-12 bg-primary-container/10 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="bolt">bolt</span>
+</div>
+<div>
+<div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Power Draw</div>
+<div class="text-2xl font-extrabold text-on-surface">12.4 <span class="text-sm font-normal opacity-50">W</span></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl flex items-center gap-6">
+<div class="w-12 h-12 bg-tertiary-container/10 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary" data-icon="device_thermostat">device_thermostat</span>
+</div>
+<div>
+<div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Internal Temp</div>
+<div class="text-2xl font-extrabold text-on-surface">24.2 <span class="text-sm font-normal opacity-50">°C</span></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl flex items-center gap-6">
+<div class="w-12 h-12 bg-secondary-container/10 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" data-icon="hub">hub</span>
+</div>
+<div>
+<div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Node Latency</div>
+<div class="text-2xl font-extrabold text-on-surface">18 <span class="text-sm font-normal opacity-50">ms</span></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

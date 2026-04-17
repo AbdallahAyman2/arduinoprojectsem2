@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#00210c",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#793015",
+                        "on-primary-fixed-variant": "#005228",
+                        "surface-container-highest": "#d4e4f6",
+                        "primary": "#006d37",
+                        "primary-fixed": "#6bfe9c",
+                        "on-secondary-container": "#396f48",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#9ad4a5",
+                        "tertiary": "#98472a",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#f7f9ff",
+                        "secondary-container": "#b5f1c0",
+                        "on-tertiary-container": "#772e14",
+                        "on-primary-container": "#005027",
+                        "on-background": "#0d1d2a",
+                        "tertiary-fixed-dim": "#ffb59d",
+                        "on-secondary-fixed-variant": "#19512d",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#390c00",
+                        "secondary": "#336943",
+                        "surface-variant": "#d4e4f6",
+                        "primary-container": "#2ecc71",
+                        "surface-container": "#e2efff",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#4ae183",
+                        "surface": "#f7f9ff",
+                        "surface-container-low": "#ecf4ff",
+                        "background": "#f7f9ff",
+                        "inverse-surface": "#223240",
+                        "outline": "#6c7b6d",
+                        "tertiary-container": "#ff9875",
+                        "tertiary-fixed": "#ffdbd0",
+                        "on-primary-fixed": "#00210c",
+                        "on-surface": "#0d1d2a",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#006d37",
+                        "on-surface-variant": "#3d4a3e",
+                        "outline-variant": "#bbcbbb",
+                        "inverse-on-surface": "#e7f2ff",
+                        "secondary-fixed": "#b5f1c0",
+                        "surface-container-high": "#d9eafc",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#4ae183",
+                        "surface-dim": "#cbdcee"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "3xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-50 dark:bg-slate-900 flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-green-700 dark:text-green-400" data-icon="psychology_alt">psychology_alt</span>
+<h1 class="text-xl font-bold tracking-tight text-green-800 dark:text-green-300 font-headline">FloraCraft</h1>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-[11px] font-bold tracking-widest text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">ONLINE</span>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-5xl mx-auto">
+<!-- Editorial Header Section -->
+<section class="mb-12">
+<span class="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">System Configuration</span>
+<h2 class="text-4xl font-extrabold font-headline text-on-background tracking-tight">Plant Profiles</h2>
+<p class="text-on-surface-variant mt-2 max-w-md">Optimize your greenhouse ecosystem by selecting specialized growth algorithms for your specific botanical species.</p>
+</section>
+<!-- Profile Selection: Asymmetrical Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+<!-- Silvercock Card -->
+<div class="md:col-span-2 group cursor-pointer relative overflow-hidden rounded-3xl bg-surface-container-lowest transition-all duration-300 hover:bg-surface-bright border-2 border-primary">
+<div class="absolute top-4 right-4 bg-primary text-on-primary rounded-full p-1 shadow-lg">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div class="p-8 flex flex-col md:flex-row gap-8 items-center">
+<div class="w-32 h-32 rounded-2xl bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-6xl text-on-secondary-container" data-icon="potted_plant">potted_plant</span>
+</div>
+<div>
+<h3 class="text-2xl font-bold font-headline mb-2">Silvercock</h3>
+<p class="text-on-surface-variant text-sm mb-4">Optimized for high-altitude resilience and rapid foliage growth. Ideal for controlled laboratory environments.</p>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-[10px] font-bold uppercase tracking-tighter">Active Profile</span>
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-[10px] font-bold uppercase tracking-tighter">Premium Genotype</span>
+</div>
+</div>
+</div>
+<img class="w-full h-48 object-cover opacity-20 grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="High-detail macro photography of a rare botanical specimen with silver-tipped leaves in a professional greenhouse setting with soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5brnSAAZLgmyOm-HfjSXv3tknsY5AN0xHDOzQF9flpks0pw-RZulOFa7qGze6NlJnv94ugNYStRXLZqsSJj5yWHHI16UIpfvZGF4sMIGtI8BA_CPSPWJiVSlfIZyMk-dyc5lTSEs2IG3c4beRd-BSrHQSOZjxsDcHPHH_O4W5rN-e8vh1TROpBywTtiix4OHxFJmt2pM8ARo4G4w-uWEzXwoVZ9lQ5S2Q2oywFde3T3OmnGCLOaSpyVdE-9vxo7zSKw7wsM5pelsU"/>
+</div>
+<!-- Shia Card -->
+<div class="group cursor-pointer relative overflow-hidden rounded-3xl bg-surface-container-low transition-all duration-300 hover:bg-surface-container-lowest">
+<div class="p-8 flex flex-col h-full justify-between">
+<div>
+<div class="w-16 h-16 rounded-xl bg-tertiary-container/30 flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-3xl text-tertiary" data-icon="psychology">psychology</span>
+</div>
+<h3 class="text-xl font-bold font-headline mb-2">Shia</h3>
+<p class="text-on-surface-variant text-xs">Standard tropical growth profile focusing on root stability and water retention efficiency.</p>
+</div>
+<div class="mt-8">
+<button class="w-full py-3 bg-white text-on-surface text-sm font-bold rounded-xl border border-outline-variant hover:bg-surface-bright transition-colors">Select Shia</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Thresholds & Parameters: The "Data Glass" -->
+<section class="bg-surface-container-low rounded-3xl p-8 mb-12">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h4 class="text-lg font-bold font-headline">Threshold Configuration</h4>
+<p class="text-sm text-on-surface-variant">Profile: <span class="text-primary font-semibold">Silvercock V2.4</span></p>
+</div>
+<div class="bg-surface-container-lowest px-4 py-2 rounded-xl shadow-sm">
+<span class="text-xs font-bold text-primary">MANUAL OVERRIDE: OFF</span>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Temp High -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl border-l-4 border-error">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-error" data-icon="device_thermostat">device_thermostat</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">TEMP_HIGH_ON</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-3xl font-bold font-headline">28</span>
+<span class="text-on-surface-variant font-medium">°C</span>
+</div>
+</div>
+<!-- Temp Low -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl border-l-4 border-secondary">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-secondary" data-icon="ac_unit">ac_unit</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">TEMP_LOW_ON</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-3xl font-bold font-headline">18</span>
+<span class="text-on-surface-variant font-medium">°C</span>
+</div>
+</div>
+<!-- Soil Dry -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl border-l-4 border-primary">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="water_drop">water_drop</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">SOIL_DRY_ON</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-3xl font-bold font-headline">30</span>
+<span class="text-on-surface-variant font-medium">%</span>
+</div>
+</div>
+<!-- Rain Threshold -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl border-l-4 border-tertiary">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-tertiary" data-icon="rainy">rainy</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">RAIN_THRESHOLD</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-3xl font-bold font-headline">500</span>
+<span class="text-on-surface-variant font-medium">mm/h</span>
+</div>
+</div>
+</div>
+<!-- Primary CTA -->
+<div class="mt-12 flex justify-center">
+<button class="px-12 py-4 bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold text-lg rounded-2xl shadow-[0_12px_32px_-8px_rgba(0,109,55,0.4)] hover:scale-[1.02] active:scale-95 transition-all">
+                    Apply Profile
+                </button>
+</div>
+</section>
+<!-- Secondary Insights: Editorial Graph -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<div class="bg-surface-container-lowest p-8 rounded-3xl">
+<h5 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant mb-6">Projected Growth Yield</h5>
+<div class="h-48 flex items-end gap-2">
+<div class="flex-1 bg-surface-container-high rounded-t-xl h-[40%]"></div>
+<div class="flex-1 bg-surface-container-high rounded-t-xl h-[55%]"></div>
+<div class="flex-1 bg-primary/20 rounded-t-xl h-[75%]"></div>
+<div class="flex-1 bg-primary/40 rounded-t-xl h-[85%]"></div>
+<div class="flex-1 bg-primary rounded-t-xl h-[95%]"></div>
+<div class="flex-1 bg-primary-container rounded-t-xl h-[80%]"></div>
+</div>
+<div class="flex justify-between mt-4 text-[10px] font-bold text-on-surface-variant uppercase">
+<span>Week 1</span>
+<span>Week 3</span>
+<span>Week 6</span>
+</div>
+</div>
+<div class="relative overflow-hidden rounded-3xl">
+<img class="absolute inset-0 w-full h-full object-cover" data-alt="Futuristic indoor automated greenhouse with glass panels, glowing blue sensors, and lush vertical gardens in the evening" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkNPBrqgm5_5C5sZoX9SbrtoYTQzqB7s1vEDT3NBRJiq1NWQMwV-oORQlb_blNbTv3bmf0xQxB5hBrgfnsk7ldplDnSCATPanbpk_JDwk5GYp1Jk_D7WxKtbQ5lsekz6Xq1aDK_XD4p9qor2SpO_nBHi4rxgDWNIicXccBcaczhNPsXpZfUbpTFuDRXXzUBGWG_CIcCPMBoMcnjPjqd8XpK7n1Sxot8st-Fu0Yu0FBOmzZ6w3HnkmDf-J91e6yM_lN7LTW_akLLGs4"/>
+<div class="absolute inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center p-8">
+<div class="text-center">
+<span class="material-symbols-outlined text-on-primary text-5xl mb-4" data-icon="fluid_med">fluid_med</span>
+<p class="text-on-primary font-bold text-xl">Silvercock profiles use 14% less water on average.</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl z-50 rounded-t-3xl border-t border-slate-100 dark:border-slate-800 shadow-[0_-8px_24px_rgba(0,0,0,0.04)]">
+<!-- Stream -->
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-5 py-2 hover:text-green-600 dark:hover:text-green-300" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="sensors">sensors</span>
+<span class="text-[11px] font-semibold font-inter uppercase tracking-wider">Stream</span>
+</a>
+<!-- Dashboard -->
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-5 py-2 hover:text-green-600 dark:hover:text-green-300" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="dashboard">dashboard</span>
+<span class="text-[11px] font-semibold font-inter uppercase tracking-wider">Dashboard</span>
+</a>
+<!-- Profiles (Active) -->
+<a class="flex flex-col items-center justify-center bg-green-100/50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-2xl px-5 py-2 scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="potted_plant" style="font-variation-settings: 'FILL' 1;">potted_plant</span>
+<span class="text-[11px] font-semibold font-inter uppercase tracking-wider">Profiles</span>
+</a>
+<!-- Testing -->
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-5 py-2 hover:text-green-600 dark:hover:text-green-300" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="biotech">biotech</span>
+<span class="text-[11px] font-semibold font-inter uppercase tracking-wider">Testing</span>
+</a>
+</nav>
+</body></html>

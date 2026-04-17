@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#d9eafc",
+                        "on-secondary-fixed": "#00210c",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#cbdcee",
+                        "on-tertiary-container": "#772e14",
+                        "surface-bright": "#f7f9ff",
+                        "inverse-primary": "#4ae183",
+                        "surface-variant": "#d4e4f6",
+                        "primary-fixed": "#6bfe9c",
+                        "surface-container-highest": "#d4e4f6",
+                        "on-error": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface": "#f7f9ff",
+                        "primary-container": "#2ecc71",
+                        "background": "#f7f9ff",
+                        "secondary": "#336943",
+                        "outline-variant": "#bbcbbb",
+                        "secondary-container": "#b5f1c0",
+                        "primary": "#006d37",
+                        "inverse-surface": "#223240",
+                        "secondary-fixed": "#b5f1c0",
+                        "on-primary-container": "#005027",
+                        "on-tertiary-fixed": "#390c00",
+                        "on-primary-fixed-variant": "#005228",
+                        "tertiary-fixed": "#ffdbd0",
+                        "on-background": "#0d1d2a",
+                        "on-surface-variant": "#3d4a3e",
+                        "on-secondary-fixed-variant": "#19512d",
+                        "on-secondary-container": "#396f48",
+                        "outline": "#6c7b6d",
+                        "on-error-container": "#93000a",
+                        "on-surface": "#0d1d2a",
+                        "surface-container-low": "#ecf4ff",
+                        "tertiary-fixed-dim": "#ffb59d",
+                        "surface-tint": "#006d37",
+                        "secondary-fixed-dim": "#9ad4a5",
+                        "tertiary": "#98472a",
+                        "primary-fixed-dim": "#4ae183",
+                        "inverse-on-surface": "#e7f2ff",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#00210c",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#e2efff",
+                        "tertiary-container": "#ff9875",
+                        "on-tertiary-fixed-variant": "#793015"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- SideNavBar (Shared Component) -->
+<aside class="fixed left-0 top-0 bottom-0 z-40 flex flex-col h-screen w-64 border-r-0 bg-slate-50 dark:bg-slate-900 font-['Manrope'] font-medium tracking-tight text-sm">
+<div class="px-6 py-8">
+<h1 class="text-2xl font-bold font-['Manrope'] text-emerald-800 dark:text-emerald-300">FloraCraft</h1>
+<p class="text-xs text-slate-500 mt-1">Precision IoT</p>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 dark:hover:bg-slate-800/80 transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined mr-3">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 dark:hover:bg-slate-800/80 transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined mr-3">terminal</span>
+                Raw Stream
+            </a>
+<a class="flex items-center px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 dark:hover:bg-slate-800/80 transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined mr-3">potted_plant</span>
+                Plant Profiles
+            </a>
+<a class="flex items-center px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 dark:hover:bg-slate-800/80 transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined mr-3">tune</span>
+                Testing
+            </a>
+<!-- Active Tab: Settings -->
+<a class="flex items-center px-4 py-3 rounded-xl text-emerald-700 dark:text-emerald-400 font-bold border-r-4 border-emerald-600 bg-slate-200/50 dark:bg-slate-800/80 transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined mr-3">settings</span>
+                Settings
+            </a>
+</nav>
+<div class="px-4 py-6 mt-auto">
+<button class="w-full flex items-center justify-center gap-2 bg-gradient-to-br from-primary to-primary-container text-on-primary py-3 px-4 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[0.98] active:scale-95 transition-all">
+<span class="material-symbols-outlined text-xl">add</span>
+                Add New Sensor
+            </button>
+</div>
+<div class="px-4 pb-8 space-y-1">
+<a class="flex items-center px-4 py-2 text-slate-600 hover:text-emerald-600 transition-colors" href="#">
+<span class="material-symbols-outlined mr-3">help</span>
+                Help
+            </a>
+<a class="flex items-center px-4 py-2 text-slate-600 hover:text-emerald-600 transition-colors" href="#">
+<span class="material-symbols-outlined mr-3">logout</span>
+                Logout
+            </a>
+</div>
+</aside>
+<!-- TopAppBar (Shared Component) -->
+<header class="flex items-center justify-between px-8 sticky top-0 z-30 ml-64 w-[calc(100%-16rem)] h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm shadow-emerald-900/5 font-['Inter'] text-sm tracking-wide">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-high border-none rounded-lg focus:ring-2 focus:ring-primary/20 text-on-surface" placeholder="Search system logs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-slate-500 hover:text-emerald-600 transition-opacity opacity-100 hover:opacity-80">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="flex items-center gap-2 px-3 py-1.5 bg-secondary-container rounded-full text-on-secondary-container font-medium">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">cloud_done</span>
+                Synced
+            </div>
+<button class="text-slate-500 hover:text-emerald-600 transition-opacity opacity-100 hover:opacity-80">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-12 min-h-screen">
+<div class="max-w-5xl mx-auto">
+<!-- Header Section -->
+<div class="mb-12 flex justify-between items-end">
+<div>
+<h2 class="text-4xl font-extrabold tracking-tight text-on-surface">System Configuration</h2>
+<p class="text-on-surface-variant mt-2 text-lg">Manage your IoT infrastructure and synchronization parameters.</p>
+</div>
+<!-- Status Card: Last Successful Sync -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border-l-4 border-primary shadow-sm flex items-center gap-4">
+<div class="bg-primary-container/20 p-3 rounded-full">
+<span class="material-symbols-outlined text-primary">sync</span>
+</div>
+<div>
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Last successful sync</p>
+<p class="text-xl font-headline font-bold text-on-surface">2 mins ago</p>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left Column: Primary Settings -->
+<div class="lg:col-span-8 space-y-8">
+<!-- Cloud Services Section -->
+<section class="bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-primary text-3xl">cloud</span>
+<h3 class="text-2xl font-bold">Cloud Services</h3>
+</div>
+<div class="space-y-6">
+<div>
+<label class="block text-sm font-semibold text-on-surface-variant mb-2">Supabase Project URL</label>
+<div class="relative">
+<input class="w-full bg-surface-container-high border-none rounded-xl py-4 px-5 focus:ring-0 focus:border-none focus:bg-white transition-all border-l-2 border-transparent focus:border-l-primary" type="text" value="https://xyqztp-flracrft.supabase.co"/>
+</div>
+</div>
+<div>
+<label class="block text-sm font-semibold text-on-surface-variant mb-2">API Key</label>
+<div class="relative group">
+<input class="w-full bg-surface-container-high border-none rounded-xl py-4 px-5 focus:ring-0 focus:bg-white transition-all border-l-2 border-transparent focus:border-l-primary" type="password" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+<p class="text-xs text-on-surface-variant/60 mt-2">Required for real-time telemetry streaming and historical data storage.</p>
+</div>
+</div>
+</section>
+<!-- Hardware Identity Section -->
+<section class="bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-primary text-3xl">memory</span>
+<h3 class="text-2xl font-bold">Hardware Identity</h3>
+</div>
+<div>
+<label class="block text-sm font-semibold text-on-surface-variant mb-2">Device Name</label>
+<input class="w-full bg-surface-container-high border-none rounded-xl py-4 px-5 focus:ring-0 focus:bg-white transition-all border-l-2 border-transparent focus:border-l-primary" type="text" value="FLORA-COMMANDER-01"/>
+<p class="text-xs text-on-surface-variant/60 mt-2">This identifier will be visible across your sensor mesh network.</p>
+</div>
+</section>
+</div>
+<!-- Right Column: Operational Parameters -->
+<div class="lg:col-span-4 space-y-8">
+<section class="bg-surface-container-lowest rounded-xl p-8 shadow-sm h-full">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-primary text-3xl">analytics</span>
+<h3 class="text-2xl font-bold">Operational Parameters</h3>
+</div>
+<div class="space-y-12">
+<div>
+<div class="flex justify-between items-end mb-4">
+<label class="text-sm font-semibold text-on-surface-variant">Sampling Rate</label>
+<span class="bg-primary-container text-on-primary-container text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">Current: Fast</span>
+</div>
+<div class="relative py-6">
+<!-- Custom Slider UI -->
+<div class="h-2 w-full bg-surface-container-high rounded-full relative overflow-hidden">
+<div class="absolute top-0 left-0 h-full w-2/3 bg-primary"></div>
+</div>
+<div class="absolute top-1/2 left-2/3 -translate-y-1/2 -ml-3 w-6 h-6 bg-primary rounded-full shadow-lg border-4 border-white cursor-pointer active:scale-110 transition-transform"></div>
+<div class="flex justify-between mt-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">
+<span>Economy</span>
+<span>Real-time</span>
+</div>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed bg-surface-container-low p-4 rounded-lg mt-6">
+                                    Sampling at <span class="font-bold text-primary">500ms</span>. This increases battery drain by 15% but provides smoother visualization curves.
+                                </p>
+</div>
+<div class="pt-8 border-t border-outline-variant/20">
+<h4 class="text-sm font-bold text-on-surface-variant mb-4 uppercase tracking-widest">Sensor Health Pulse</h4>
+<div class="flex gap-1 h-12 items-end">
+<div class="w-full bg-primary-container h-[40%] rounded-t-sm"></div>
+<div class="w-full bg-primary-container h-[60%] rounded-t-sm"></div>
+<div class="w-full bg-primary-container h-[45%] rounded-t-sm"></div>
+<div class="w-full bg-primary h-[80%] rounded-t-sm"></div>
+<div class="w-full bg-primary-container h-[55%] rounded-t-sm"></div>
+<div class="w-full bg-primary-container h-[40%] rounded-t-sm"></div>
+<div class="w-full bg-primary-container h-[50%] rounded-t-sm"></div>
+<div class="w-full bg-primary h-[95%] rounded-t-sm"></div>
+<div class="w-full bg-primary-container h-[40%] rounded-t-sm"></div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Global Actions -->
+<div class="mt-12 flex items-center justify-between p-8 bg-surface-container-high rounded-2xl">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">info</span>
+<span class="text-sm text-on-surface-variant">All changes are logged in the local system audit file.</span>
+</div>
+<div class="flex gap-4">
+<button class="px-8 py-4 text-on-surface-variant font-bold hover:text-on-surface transition-colors">Discard Changes</button>
+<button class="px-10 py-4 bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold rounded-xl shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all">
+                        Save Configuration
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Background Decorative Gradient -->
+<div class="fixed top-0 right-0 -z-10 w-1/3 h-1/3 bg-primary/5 blur-[120px] rounded-full pointer-events-none"></div>
+<div class="fixed bottom-0 left-1/4 -z-10 w-1/4 h-1/4 bg-tertiary/5 blur-[100px] rounded-full pointer-events-none"></div>
+</body></html>

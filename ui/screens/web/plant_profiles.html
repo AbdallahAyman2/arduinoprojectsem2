@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "surface-container-high": "#d9eafc",
+                  "on-secondary-fixed": "#00210c",
+                  "error-container": "#ffdad6",
+                  "surface-dim": "#cbdcee",
+                  "on-tertiary-container": "#772e14",
+                  "surface-bright": "#f7f9ff",
+                  "inverse-primary": "#4ae183",
+                  "surface-variant": "#d4e4f6",
+                  "primary-fixed": "#6bfe9c",
+                  "surface-container-highest": "#d4e4f6",
+                  "on-error": "#ffffff",
+                  "on-secondary": "#ffffff",
+                  "on-primary": "#ffffff",
+                  "surface-container-lowest": "#ffffff",
+                  "surface": "#f7f9ff",
+                  "primary-container": "#2ecc71",
+                  "background": "#f7f9ff",
+                  "secondary": "#336943",
+                  "outline-variant": "#bbcbbb",
+                  "secondary-container": "#b5f1c0",
+                  "primary": "#006d37",
+                  "inverse-surface": "#223240",
+                  "secondary-fixed": "#b5f1c0",
+                  "on-background": "#0d1d2a",
+                  "on-surface-variant": "#3d4a3e",
+                  "on-secondary-fixed-variant": "#19512d",
+                  "on-secondary-container": "#396f48",
+                  "outline": "#6c7b6d",
+                  "on-error-container": "#93000a",
+                  "on-surface": "#0d1d2a",
+                  "surface-container-low": "#ecf4ff",
+                  "tertiary-fixed-dim": "#ffb59d",
+                  "surface-tint": "#006d37",
+                  "secondary-fixed-dim": "#9ad4a5",
+                  "tertiary": "#98472a",
+                  "primary-fixed-dim": "#4ae183",
+                  "inverse-on-surface": "#e7f2ff",
+                  "error": "#ba1a1a",
+                  "on-primary-fixed": "#00210c",
+                  "on-tertiary": "#ffffff",
+                  "surface-container": "#e2efff",
+                  "tertiary-container": "#ff9875",
+                  "on-tertiary-fixed-variant": "#793015"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "16px",
+                  "xl": "24px",
+                  "full": "9999px"
+          },
+          "fontFamily": {
+                  "headline": ["Manrope", "sans-serif"],
+                  "body": ["Inter", "sans-serif"],
+                  "label": ["Inter", "sans-serif"],
+                  "mono": ["JetBrains Mono", "monospace"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-headline { font-family: 'Manrope', sans-serif; }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 bottom-0 z-40 flex flex-col h-screen w-64 bg-slate-50 dark:bg-slate-900 font-['Manrope'] font-medium tracking-tight text-sm">
+<div class="p-8">
+<div class="flex items-center gap-3 mb-10">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="potted_plant">potted_plant</span>
+</div>
+<div>
+<h1 class="text-2xl font-bold font-['Manrope'] text-emerald-800 dark:text-emerald-300">FloraCraft</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Precision IoT</p>
+</div>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 dark:hover:bg-slate-800/80 transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+          Dashboard
+        </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 dark:hover:bg-slate-800/80 transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+          Raw Stream
+        </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-emerald-700 dark:text-emerald-400 font-bold border-r-4 border-emerald-600 bg-slate-200/50 dark:bg-slate-800/80 group" href="#">
+<span class="material-symbols-outlined" data-icon="potted_plant">potted_plant</span>
+          Plant Profiles
+        </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 dark:hover:bg-slate-800/80 transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+          Testing
+        </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 dark:hover:bg-slate-800/80 transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+          Settings
+        </a>
+</nav>
+<button class="mt-8 w-full py-4 px-4 bg-primary text-on-primary rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all scale-95 active:scale-90 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+        Add New Sensor
+      </button>
+</div>
+<div class="mt-auto p-8 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3 mb-6 p-2 rounded-xl bg-slate-100 dark:bg-slate-800/50">
+<img alt="User profile picture" class="w-10 h-10 rounded-lg object-cover" data-alt="close-up portrait of a professional male agricultural engineer in a clean modern lab setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdXRgjbL8tElVqyOyZY7MfprotdRmfZO_ILelk4rbOfVuxrbsc620_9utM4Ol6M4S80znPXByx18UbWXsV9SsBh4faxw-xDnI9qD_7_kPQEpuiuRKuItgpkaG7Sx-zT65B773nZ9SkCHEr-gpMUGoL-vJ0FsO_LF1QlSzyH8eIynRPFZvpePSTYJv7SMO0SE3WYDJm2WPGlzRHo7pJTaVMyASERgMjbI3OyEszpPaN9xxDX0uEE2BVXEt8Z1yZynYol3IwYQvI4pne"/>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">Dr. Aris Thorne</p>
+<p class="text-[10px] text-slate-500">Facility Manager</p>
+</div>
+</div>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-emerald-600 transition-colors" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="help">help</span>
+          Help
+        </a>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-error transition-colors" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="logout">logout</span>
+          Logout
+        </a>
+</div>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="flex items-center justify-between px-8 sticky top-0 z-30 ml-64 w-[calc(100%-16rem)] h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm shadow-emerald-900/5">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" data-icon="search">search</span>
+<input class="w-full bg-slate-100 dark:bg-slate-900 border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-body" placeholder="Search cultivars or sensor IDs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 px-3 py-1 bg-primary-container/20 text-on-primary-container rounded-full text-xs font-bold">
+<span class="material-symbols-outlined text-sm" data-icon="cloud_done">cloud_done</span>
+        SYNCED
+      </div>
+<div class="flex items-center gap-4 text-slate-500">
+<button class="hover:text-emerald-600 transition-opacity opacity-100 hover:opacity-80 relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
+</button>
+<button class="hover:text-emerald-600 transition-opacity opacity-100 hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-8 min-h-screen">
+<!-- Header Section -->
+<header class="mb-12">
+<h2 class="text-5xl font-extrabold font-headline text-on-background tracking-tight mb-2">Plant Profiles</h2>
+<p class="text-slate-500 font-body text-lg max-w-2xl leading-relaxed">Manage biological thresholds and growth parameters for individual cultivars. Data updates live across the IoT sensor mesh.</p>
+</header>
+<div class="grid grid-cols-12 gap-8 items-start">
+<!-- Left Column: Profile Cards -->
+<section class="col-span-12 lg:col-span-5 space-y-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xs uppercase tracking-[0.2em] font-bold text-slate-400">Selected Cultivars</h3>
+<button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">View Catalog <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span></button>
+</div>
+<!-- Card: Silvercock -->
+<div class="group relative overflow-hidden bg-surface-container-lowest rounded-xl p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/5 ring-1 ring-black/[0.03] cursor-pointer">
+<div class="flex gap-6">
+<div class="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0 bg-secondary-container">
+<img alt="Silvercock cultivar" class="w-full h-full object-cover transition-transform group-hover:scale-110" data-alt="close-up of a silver-toned exotic succulent plant with sharp textures and soft morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALlLDcNV2IzK4jjoP4bLdaiaFsrZzXeB2rfkMr_x5K6eIc_drfQagnMhHfukA1iM63TC54DkU32B-cm77AE2PeTXHiEMUSKxGVx1H4qIDGmJMJ3Mdl-QRsVBRnoLAB7IQ5gLr6iSnGB1mmKckWdhr2iz_D9tVzier6jmh8adrtoD3Xo1FxosIh8akqO7TV_pAX8lgldPUKi_fgaPJLeX6qbRfGhZT7wVZkcYY6dFb0lX6DwW2DSRweoKiLxfguuZulYLg9wsb-afQZ"/>
+</div>
+<div class="flex-1 flex flex-col justify-center">
+<div class="flex items-center justify-between mb-2">
+<h4 class="text-2xl font-bold font-headline text-on-surface">Silvercock</h4>
+<span class="px-3 py-1 bg-primary-container text-on-primary-container text-[10px] font-black uppercase tracking-wider rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> Active
+                </span>
+</div>
+<p class="text-slate-500 text-sm mb-4">Silver-leafed desert hybrid. Optimized for high UV intensity and low humidity environments.</p>
+<div class="flex gap-4">
+<div class="flex items-center gap-1 text-xs font-bold text-on-surface">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="thermostat">thermostat</span> 24°C Avg
+                </div>
+<div class="flex items-center gap-1 text-xs font-bold text-on-surface">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="opacity">opacity</span> 18% Soil
+                </div>
+</div>
+</div>
+</div>
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-primary rounded-l-xl"></div>
+</div>
+<!-- Card: Shia -->
+<div class="group relative overflow-hidden bg-slate-100/50 dark:bg-slate-900/50 rounded-xl p-6 transition-all duration-300 hover:bg-surface-container-lowest ring-1 ring-black/[0.03] cursor-pointer">
+<div class="flex gap-6">
+<div class="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0 grayscale group-hover:grayscale-0 transition-all">
+<img alt="Shia cultivar" class="w-full h-full object-cover group-hover:scale-110" data-alt="lush tropical deep green foliage with broad leaves and misty water droplets in a humid environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAb9BY_DktiUHiJPDvJzif3xFXwWERLOT0zfp6FKVWBaYyGEHbH4XQEGMTL9Y13JxiVrTBg6ULO0l5A9t7ILSTt446ls6morudqBpy9JA54c6r4t08HuTg5XFKQH0C7Pvd8Ylfi-lj5fWOXDp8IhY0g9-FVOLSdnDESr1adfQyJ7yykIeqiwu_I7DWv-KNA7_oVrWLX1UTJDEfQFn7QbF31k1iQR9U0MRy6NluVEQ7zESJJZ-E-6z9Rv0tFXe5MHV4CkF_WJXl4cQ6u"/>
+</div>
+<div class="flex-1 flex flex-col justify-center">
+<div class="flex items-center justify-between mb-2">
+<h4 class="text-2xl font-bold font-headline text-on-surface/50 group-hover:text-on-surface transition-colors">Shia</h4>
+<span class="px-3 py-1 bg-surface-variant text-on-surface-variant text-[10px] font-black uppercase tracking-wider rounded-full">
+                  Standby
+                </span>
+</div>
+<p class="text-slate-500 text-sm mb-4 group-hover:text-slate-600 transition-colors">Broadleaf tropical variant. Requires high humidity and consistent moisture saturation.</p>
+<div class="flex gap-4 opacity-50 group-hover:opacity-100">
+<div class="flex items-center gap-1 text-xs font-bold text-on-surface">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="thermostat">thermostat</span> 28°C Avg
+                </div>
+<div class="flex items-center gap-1 text-xs font-bold text-on-surface">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="water_drop">water_drop</span> 85% Hum
+                </div>
+</div>
+</div>
+</div>
+</div>
+<!-- Projected Growth Chart Sidebar Integration -->
+<div class="p-6 rounded-xl bg-surface-container-low mt-12">
+<div class="flex items-center justify-between mb-6">
+<h5 class="text-sm font-bold font-headline">Projected Growth Yield</h5>
+<span class="text-primary font-mono text-xs">+14.2%</span>
+</div>
+<div class="flex items-end gap-2 h-24 mb-4">
+<div class="flex-1 bg-primary/20 rounded-t-sm h-[30%]"></div>
+<div class="flex-1 bg-primary/30 rounded-t-sm h-[45%]"></div>
+<div class="flex-1 bg-primary/40 rounded-t-sm h-[40%]"></div>
+<div class="flex-1 bg-primary/60 rounded-t-sm h-[65%]"></div>
+<div class="flex-1 bg-primary/80 rounded-t-sm h-[85%]"></div>
+<div class="flex-1 bg-primary rounded-t-sm h-[95%]"></div>
+<div class="flex-1 bg-primary/30 rounded-t-sm h-[20%]"></div>
+</div>
+<p class="text-[10px] text-slate-500 uppercase tracking-widest text-center">Forecast: 28 Days to Harvest</p>
+</div>
+</section>
+<!-- Right Column: Configuration & Details -->
+<section class="col-span-12 lg:col-span-7 bg-surface-container-lowest rounded-xl p-8 shadow-xl shadow-slate-200/50">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="text-2xl font-bold font-headline">Threshold Configuration</h3>
+<p class="text-sm text-slate-500">Live adjustments for 'Silvercock' profile.</p>
+</div>
+<button class="px-6 py-2 bg-primary text-on-primary rounded-lg font-bold text-sm shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+            Apply Profile
+          </button>
+</div>
+<div class="grid grid-cols-2 gap-6 mb-8">
+<!-- Temp High -->
+<div class="p-6 rounded-xl bg-surface-container-low group hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-lg bg-error-container text-on-error-container flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="device_thermostat">device_thermostat</span>
+</div>
+<span class="font-bold text-xs uppercase tracking-widest text-slate-500">Temp High</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-black font-headline">32.5</span>
+<span class="text-xl font-bold text-slate-400">°C</span>
+</div>
+<div class="mt-4 h-1 bg-slate-200 rounded-full overflow-hidden">
+<div class="h-full bg-error w-3/4"></div>
+</div>
+</div>
+<!-- Temp Low -->
+<div class="p-6 rounded-xl bg-surface-container-low group hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest text-primary flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="ac_unit">ac_unit</span>
+</div>
+<span class="font-bold text-xs uppercase tracking-widest text-slate-500">Temp Low</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-black font-headline">18.0</span>
+<span class="text-xl font-bold text-slate-400">°C</span>
+</div>
+<div class="mt-4 h-1 bg-slate-200 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-1/4"></div>
+</div>
+</div>
+<!-- Soil Dryness -->
+<div class="p-6 rounded-xl bg-surface-container-low group hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-lg bg-tertiary-container text-on-tertiary-container flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="grass">grass</span>
+</div>
+<span class="font-bold text-xs uppercase tracking-widest text-slate-500">Soil Dryness</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-black font-headline">15.4</span>
+<span class="text-xl font-bold text-slate-400">%</span>
+</div>
+<div class="mt-4 h-1 bg-slate-200 rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-1/2"></div>
+</div>
+</div>
+<!-- Rain Threshold -->
+<div class="p-6 rounded-xl bg-surface-container-low group hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-lg bg-secondary-container text-on-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="rainy">rainy</span>
+</div>
+<span class="font-bold text-xs uppercase tracking-widest text-slate-500">Rain Limit</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-black font-headline">4.2</span>
+<span class="text-xl font-bold text-slate-400">mm</span>
+</div>
+<div class="mt-4 h-1 bg-slate-200 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-2/3"></div>
+</div>
+</div>
+</div>
+<!-- Log/Advanced Section -->
+<div class="space-y-4">
+<h4 class="text-xs uppercase tracking-widest font-black text-slate-400">Advanced Log Stream</h4>
+<div class="bg-slate-900 rounded-lg p-6 font-mono text-[11px] text-emerald-400 leading-relaxed shadow-inner">
+<div class="flex gap-4">
+<span class="text-slate-500">[14:22:01]</span>
+<span>SETPOINT_ADJUST: SILVERCOCK_T_MAX -&gt; 32.5C</span>
+</div>
+<div class="flex gap-4">
+<span class="text-slate-500">[14:22:05]</span>
+<span class="text-primary-fixed">MESH_CONFIRM: Nodes 0x01..0x42 Updated</span>
+</div>
+<div class="flex gap-4">
+<span class="text-slate-500">[14:22:09]</span>
+<span class="text-tertiary-fixed-dim">HYGROMETER_ALERT: Soil tension below threshold at Zone 4B</span>
+</div>
+<div class="flex gap-4">
+<span class="text-slate-500">[14:22:15]</span>
+<span>CALC_YIELD: Dynamic forecast revised +1.2% based on new T_MAX</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>

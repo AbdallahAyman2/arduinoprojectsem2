@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#00210c",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed-variant": "#793015",
+                    "on-primary-fixed-variant": "#005228",
+                    "surface-container-highest": "#d4e4f6",
+                    "primary": "#006d37",
+                    "primary-fixed": "#6bfe9c",
+                    "on-secondary-container": "#396f48",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed-dim": "#9ad4a5",
+                    "tertiary": "#98472a",
+                    "on-error-container": "#93000a",
+                    "surface-bright": "#f7f9ff",
+                    "secondary-container": "#b5f1c0",
+                    "on-tertiary-container": "#772e14",
+                    "on-primary-container": "#005027",
+                    "on-background": "#0d1d2a",
+                    "tertiary-fixed-dim": "#ffb59d",
+                    "on-secondary-fixed-variant": "#19512d",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed": "#390c00",
+                    "secondary": "#336943",
+                    "surface-variant": "#d4e4f6",
+                    "primary-container": "#2ecc71",
+                    "surface-container": "#e2efff",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-primary": "#4ae183",
+                    "surface": "#f7f9ff",
+                    "surface-container-low": "#ecf4ff",
+                    "background": "#f7f9ff",
+                    "inverse-surface": "#223240",
+                    "outline": "#6c7b6d",
+                    "tertiary-container": "#ff9875",
+                    "tertiary-fixed": "#ffdbd0",
+                    "on-primary-fixed": "#00210c",
+                    "on-surface": "#0d1d2a",
+                    "on-error": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "surface-tint": "#006d37",
+                    "on-surface-variant": "#3d4a3e",
+                    "outline-variant": "#bbcbbb",
+                    "inverse-on-surface": "#e7f2ff",
+                    "secondary-fixed": "#b5f1c0",
+                    "surface-container-high": "#d9eafc",
+                    "error": "#ba1a1a",
+                    "primary-fixed-dim": "#4ae183",
+                    "surface-dim": "#cbdcee"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "2xl": "1rem",
+                    "3xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="bg-slate-50 dark:bg-slate-900 fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-green-700 dark:text-green-400 text-2xl">psychology_alt</span>
+<h1 class="text-xl font-bold tracking-tight text-green-800 dark:text-green-300 font-headline">FloraCraft</h1>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+<span class="text-sm font-inter font-bold text-green-700 dark:text-green-400">ONLINE</span>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto space-y-10">
+<!-- Header Section -->
+<section class="flex flex-col gap-1">
+<h2 class="text-3xl font-extrabold font-headline tracking-tight text-on-surface">Dashboard</h2>
+<p class="text-sm text-outline font-medium">Real-time environmental telemetry</p>
+</section>
+<!-- Summary Cards: Bento Style Asymmetry -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Temperature Card (Large Accent) -->
+<div class="bg-surface-container-lowest rounded-xl p-6 transition-all hover:bg-surface-bright flex flex-col justify-between min-h-[160px]">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-primary p-3 bg-primary-container/20 rounded-xl">thermostat</span>
+<div class="flex items-center text-primary font-bold text-sm">
+<span class="material-symbols-outlined text-sm">arrow_upward</span>
+<span>2%</span>
+</div>
+</div>
+<div>
+<p class="text-sm font-medium text-outline">Temperature</p>
+<h3 class="text-4xl font-extrabold font-headline text-on-surface">24°C</h3>
+</div>
+</div>
+<!-- Soil Moisture -->
+<div class="bg-surface-container-lowest rounded-xl p-6 transition-all hover:bg-surface-bright flex flex-col justify-between min-h-[160px]">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-secondary p-3 bg-secondary-container/30 rounded-xl">water_drop</span>
+</div>
+<div>
+<p class="text-sm font-medium text-outline">Soil Moisture</p>
+<h3 class="text-4xl font-extrabold font-headline text-on-surface">65%</h3>
+</div>
+</div>
+<!-- Leaf Wetness -->
+<div class="bg-surface-container-lowest rounded-xl p-6 transition-all hover:bg-surface-bright flex flex-col justify-between min-h-[160px]">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-tertiary p-3 bg-tertiary-container/30 rounded-xl">potted_plant</span>
+</div>
+<div>
+<p class="text-sm font-medium text-outline">Leaf Wetness</p>
+<h3 class="text-4xl font-extrabold font-headline text-on-surface">12%</h3>
+</div>
+</div>
+</section>
+<!-- Charts & Analytics Section -->
+<section class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+<!-- Line Chart Area -->
+<div class="lg:col-span-3 bg-surface-container-low rounded-xl p-8">
+<div class="flex justify-between items-center mb-8">
+<h3 class="font-bold text-lg font-headline">Environmental Trends</h3>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="text-xs font-semibold text-outline">Temp</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-secondary"></div>
+<span class="text-xs font-semibold text-outline">Moisture</span>
+</div>
+</div>
+</div>
+<!-- Sparkline Placeholder Logic -->
+<div class="h-64 flex items-end gap-1 overflow-hidden">
+<div class="flex-1 bg-primary/20 rounded-t-sm" style="height: 45%;"></div>
+<div class="flex-1 bg-primary/30 rounded-t-sm" style="height: 52%;"></div>
+<div class="flex-1 bg-primary/40 rounded-t-sm" style="height: 48%;"></div>
+<div class="flex-1 bg-primary/50 rounded-t-sm" style="height: 60%;"></div>
+<div class="flex-1 bg-primary/60 rounded-t-sm" style="height: 75%;"></div>
+<div class="flex-1 bg-primary/70 rounded-t-sm" style="height: 85%;"></div>
+<div class="flex-1 bg-primary/80 rounded-t-sm" style="height: 80%;"></div>
+<div class="flex-1 bg-primary/90 rounded-t-sm" style="height: 95%;"></div>
+<div class="flex-1 bg-primary rounded-t-sm" style="height: 90%;"></div>
+</div>
+<div class="mt-4 flex justify-between text-[10px] text-outline font-bold uppercase tracking-widest">
+<span>08:00 AM</span>
+<span>12:00 PM</span>
+<span>04:00 PM</span>
+</div>
+</div>
+<!-- Gauge Section -->
+<div class="lg:col-span-2 bg-surface-container-high rounded-xl p-8 flex flex-col items-center justify-center text-center">
+<h3 class="font-bold text-lg font-headline mb-8 self-start">Saturation Gauge</h3>
+<div class="relative w-48 h-48 flex items-center justify-center">
+<!-- Semi-circle SVG for Gauge -->
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-dim" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-width="12"></circle>
+<circle class="text-tertiary" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-dasharray="502" stroke-dashoffset="440" stroke-width="12"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-3xl font-extrabold font-headline">12%</span>
+<span class="text-[10px] font-bold text-outline uppercase tracking-tighter">Leaf Wet</span>
+</div>
+</div>
+<p class="mt-6 text-xs text-on-tertiary-fixed-variant bg-tertiary-container/20 px-3 py-1 rounded-full font-semibold">OPTIMAL RANGE</p>
+</div>
+</section>
+<!-- Status Grid: Industrial Control Panel -->
+<section class="space-y-6">
+<div class="flex justify-between items-end">
+<h3 class="font-bold text-lg font-headline">Actuator Control System</h3>
+<span class="text-xs font-mono text-outline">System ID: FC-IOT-9921</span>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+<!-- Mode -->
+<div class="bg-surface-container-lowest p-4 rounded-xl flex flex-col gap-2">
+<span class="text-[10px] font-bold text-outline uppercase">Mode</span>
+<span class="bg-primary-container text-on-primary-container text-[11px] font-bold py-1 px-3 rounded-full self-start">AUTO</span>
+</div>
+<!-- Profile -->
+<div class="bg-surface-container-lowest p-4 rounded-xl flex flex-col gap-2">
+<span class="text-[10px] font-bold text-outline uppercase">Profile</span>
+<span class="bg-tertiary-container text-on-tertiary-container text-[11px] font-bold py-1 px-3 rounded-full self-start">SILVERCOCK</span>
+</div>
+<!-- Pump -->
+<div class="bg-surface-container-lowest p-4 rounded-xl flex flex-col gap-2">
+<span class="text-[10px] font-bold text-outline uppercase">Pump</span>
+<span class="bg-surface-variant text-on-surface-variant text-[11px] font-bold py-1 px-3 rounded-full self-start">OFF</span>
+</div>
+<!-- Fan -->
+<div class="bg-surface-container-lowest p-4 rounded-xl flex flex-col gap-2">
+<span class="text-[10px] font-bold text-outline uppercase">Fan</span>
+<span class="bg-primary-container text-on-primary-container text-[11px] font-bold py-1 px-3 rounded-full self-start">ON</span>
+</div>
+<!-- Heater -->
+<div class="bg-surface-container-lowest p-4 rounded-xl flex flex-col gap-2">
+<span class="text-[10px] font-bold text-outline uppercase">Heater</span>
+<span class="bg-surface-variant text-on-surface-variant text-[11px] font-bold py-1 px-3 rounded-full self-start">OFF</span>
+</div>
+<!-- Lid -->
+<div class="bg-surface-container-lowest p-4 rounded-xl flex flex-col gap-2">
+<span class="text-[10px] font-bold text-outline uppercase">Lid</span>
+<span class="bg-surface-variant text-on-surface-variant text-[11px] font-bold py-1 px-3 rounded-full self-start">CLOSED</span>
+</div>
+</div>
+</section>
+<!-- Footer Metric -->
+<footer class="flex justify-center pt-8">
+<p class="text-xs text-outline font-medium tracking-wide">Last update: 2 mins ago</p>
+</footer>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 z-50 rounded-t-3xl border-t border-slate-100 dark:border-slate-800 shadow-[0_-8px_24px_rgba(0,0,0,0.04)]">
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-5 py-2 hover:text-green-600 dark:hover:text-green-300" href="#">
+<span class="material-symbols-outlined">sensors</span>
+<span class="text-[11px] font-semibold font-inter uppercase tracking-wider">Stream</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-green-100/50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-2xl px-5 py-2 scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-[11px] font-semibold font-inter uppercase tracking-wider">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-5 py-2 hover:text-green-600 dark:hover:text-green-300" href="#">
+<span class="material-symbols-outlined">potted_plant</span>
+<span class="text-[11px] font-semibold font-inter uppercase tracking-wider">Profiles</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-5 py-2 hover:text-green-600 dark:hover:text-green-300" href="#">
+<span class="material-symbols-outlined">biotech</span>
+<span class="text-[11px] font-semibold font-inter uppercase tracking-wider">Testing</span>
+</a>
+</nav>
+</body></html>
