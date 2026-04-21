@@ -147,46 +147,127 @@ at runtime without reflashing.
 
 ---
 
-## ☁️ Supabase Cloud Sync
+## ☁️ Supabase Cloud Sync (Gateway Integration)
 
-### Database setup
+The FloraCraft web app connects to the same Supabase project used by the
+**FloraCraft Gateway** (the Node.js Bluetooth-to-cloud bridge).  The gateway
+writes readings from the Arduino to `public.readings`; the web app reads them
+in real-time and lets you send commands back via `public.commands`.
 
-1. Create a project at [supabase.com](https://supabase.com)
-2. Open the **SQL Editor** and run:
+### 1 · Create the tables
+
+Open the **SQL Editor** in your Supabase project and run:
 
 ```sql
--- Sensor readings
-create table sensor_readings (
-  id            bigserial primary key,
-  created_at    timestamptz default now(),
-  temperature   float,
-  soil_pct      int,
-  rain_pct      int,
-  pump_state    text,
-  fan_state     text,
-  heater_state  text,
-  lid_state     text,
-  device_id     text default 'Flora-GW-01'
+-- ── Device registry ──────────────────────────────────────────────────────
+create table if not exists public.devices (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null,
+  created_at timestamptz default now()
 );
 
--- Command log
-create table command_log (
-  id       bigserial primary key,
-  sent_at  timestamptz default now(),
-  command  text,
-  source   text default 'web'
+-- ── Sensor readings (written by the gateway every ~2 s) ──────────────────
+create table if not exists public.readings (
+  id         bigserial primary key,
+  device_id  uuid references public.devices(id),
+  raw_data   text,
+  temp_c     float,
+  soil_pct   int,
+  rain_pct   int,
+  pump_on    boolean default false,
+  fan_on     boolean default false,
+  heater_on  boolean default false,
+  lid_state  text,
+  mode       text default 'AUTO',
+  profile    text,
+  ts         timestamptz default now()
 );
 
--- Allow anonymous access (adjust for production)
-alter table sensor_readings enable row level security;
-alter table command_log     enable row level security;
-create policy "anon insert readings" on sensor_readings for insert with check (true);
-create policy "anon select readings" on sensor_readings for select using (true);
-create policy "anon insert commands" on command_log     for insert with check (true);
+-- ── Commands (queued by the web app, consumed by the gateway) ────────────
+create table if not exists public.commands (
+  id           bigserial primary key,
+  device_id    uuid references public.devices(id),
+  command      text not null,
+  status       text default 'queued',
+  response     text,
+  sent_at      timestamptz,
+  applied_at   timestamptz,
+  requested_by text,
+  ts           timestamptz default now()
+);
 ```
 
-3. In the **Settings** tab of the app, enter your **Project URL** and **Anon Key**
-4. Click **Save Configuration** – readings will start syncing automatically
+### 2 · Enable Row Level Security (RLS) + allow anonymous access
+
+```sql
+-- readings
+alter table public.readings enable row level security;
+create policy "anon select readings" on public.readings for select to anon using (true);
+create policy "anon insert readings" on public.readings for insert to anon with check (true);
+
+-- commands
+alter table public.commands enable row level security;
+create policy "anon insert commands" on public.commands for insert to anon with check (true);
+create policy "anon select commands" on public.commands for select to anon using (true);
+
+-- devices
+alter table public.devices enable row level security;
+create policy "anon select devices" on public.devices for select to anon using (true);
+```
+
+> **Security note:** The policies above allow any visitor to read readings and
+> queue commands.  This is fine for a home greenhouse.  For a production
+> deployment add Supabase Auth and tighten the `using` / `with check` clauses.
+
+### 3 · Enable Realtime for `readings`
+
+In the Supabase Dashboard:
+1. Go to **Database → Replication**
+2. Find the `readings` table and enable the **INSERT** event
+
+This lets the web app receive live updates via WebSocket instead of polling.
+
+### 4 · Add your device to the `devices` table
+
+```sql
+insert into public.devices (name) values ('FloraCraft-01')
+returning id;  -- note the UUID
+```
+
+Or use the **Table Editor** UI.  Copy the `id` UUID – you will need it in Step 6.
+
+### 5 · Configure the gateway
+
+In `FloraCraftGateway/.env` set:
+```env
+SUPABASE_URL=https://<your-project>.supabase.co
+SUPABASE_KEY=<your-anon-or-service-key>
+DEVICE_ID=<the UUID from Step 4>
+SERIAL_PORT=COM3   # or whichever COM port the HC-05 uses
+BAUD_RATE=9600
+```
+
+Start the gateway:
+```bat
+node gateway.js
+```
+
+You should see `[ARDUINO] DATA,…` lines and rows appearing in the `readings`
+table in Supabase.
+
+### 6 · Configure the web app
+
+Open the app (`http://localhost:3000`) and go to **Settings**:
+
+| Field | Value |
+|-------|-------|
+| **Supabase Project URL** | `https://<your-project>.supabase.co` |
+| **Supabase Anon Key** | your `anon`/`publishable` key |
+| **Device UUID** | the UUID from Step 4 (must match the gateway's `DEVICE_ID`) |
+| **Device Name** | human-readable label (display only) |
+
+Click **Save Configuration**.  The dashboard will immediately load the latest
+reading and then update live.
 
 ---
 

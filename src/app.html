@@ -58,6 +58,9 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
+  <!-- Supabase JS SDK (provides window.supabase.createClient for Realtime) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
   <!-- FloraCraft Services (absolute paths – work under any serving URL/rewrite) -->
   <script src="/src/bluetooth.js" defer></script>
   <script src="/src/supabase.js"  defer></script>
@@ -805,13 +808,20 @@
               <label class="block text-xs font-bold uppercase tracking-widest text-outline mb-1.5">Supabase Anon Key</label>
               <div class="relative">
                 <input id="inp-supa-key" type="password"
-                       placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…"
+                       placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9… or sb_publishable_…"
                        class="w-full bg-surface-container-high border-none rounded-lg px-3 py-2.5 pr-12 text-sm font-mono focus:ring-0 focus:border-l-4 focus:border-l-primary transition-all" />
                 <button onclick="toggleKeyVisibility()"
                         class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface">
                   <span id="eye-icon" class="material-symbols-outlined text-xl">visibility</span>
                 </button>
               </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-widest text-outline mb-1.5">Device UUID</label>
+              <input id="inp-device-id" type="text"
+                     placeholder="d4e76d26-5b5d-4e68-ad7a-158de797fc39"
+                     class="w-full bg-surface-container-high border-none rounded-lg px-3 py-2.5 text-sm font-mono focus:ring-0 focus:border-l-4 focus:border-l-primary transition-all" />
+              <p class="text-[10px] text-outline mt-1">The <code>id</code> of the device row in <code>public.devices</code>. Must match the gateway's DEVICE_ID.</p>
             </div>
           </div>
         </div>
@@ -1045,24 +1055,49 @@ function onBtData(line) {
   // Always append to raw terminal
   appendLog(line, 'data');
 
-  // Parse structured data lines: "DATA,<temp>,<soil%>,<rain%>,<pump>,<fan>,<heater>,<lid>"
+  // Parse structured data lines.
+  // Gateway format (13 fields): DATA,<ms>,<tempC>,<soilRaw>,<soilPct>,<rainRaw>,<rainPct>,<pump>,<fan>,<heater>,<lid>,<mode>,<profile>
+  // Firmware format  (8 fields): DATA,<temp>,<soil%>,<rain%>,<pump>,<fan>,<heater>,<lid>
   if (line.startsWith('DATA,')) {
     const parts = line.split(',');
-    if (parts.length < 8) return;
 
-    const reading = {
-      temperature:  parseFloat(parts[1]),
-      soil_pct:     parseInt(parts[2]),
-      rain_pct:     parseInt(parts[3]),
-      pump_state:   parts[4],
-      fan_state:    parts[5],
-      heater_state: parts[6],
-      lid_state:    parts[7],
-    };
+    let reading;
+    if (parts.length >= 13) {
+      // New gateway/simulator format
+      reading = {
+        temperature:  parseFloat(parts[2]),
+        soil_pct:     parseInt(parts[4]),
+        rain_pct:     parseInt(parts[6]),
+        pump_state:   parts[7].trim(),
+        fan_state:    parts[8].trim(),
+        heater_state: parts[9].trim(),
+        lid_state:    parts[10].trim(),
+        mode:         parts[11].trim(),
+        profile:      parts[12].trim(),
+        raw_data:     line,
+      };
+    } else if (parts.length >= 8) {
+      // Original firmware format
+      reading = {
+        temperature:  parseFloat(parts[1]),
+        soil_pct:     parseInt(parts[2]),
+        rain_pct:     parseInt(parts[3]),
+        pump_state:   parts[4].trim(),
+        fan_state:    parts[5].trim(),
+        heater_state: parts[6].trim(),
+        lid_state:    parts[7].trim(),
+        mode:         state.arduinoMode === 'test' ? 'TEST' : 'AUTO',
+        profile:      state.activeProfile.toUpperCase(),
+        raw_data:     line,
+      };
+    } else {
+      return; // too few fields
+    }
+
     state.lastReading = reading;
     updateDashboard(reading);
 
-    // ── TODO (wiring): Push to Supabase ──
+    // Push reading to Supabase (direct BT path)
     if (typeof SupabaseService !== 'undefined') {
       SupabaseService.pushReading(reading).then(() => {
         const el = document.getElementById('last-sync');
@@ -1074,40 +1109,104 @@ function onBtData(line) {
 
 /* ─── Dashboard updater ──────────────────────────────────────────────────── */
 function updateDashboard(r) {
+  // Guard against null/undefined values
+  const temp = r.temperature ?? r.temp_c;
+  const soil = r.soil_pct;
+  const rain = r.rain_pct;
+
   // Metric cards
-  setText('val-temp', r.temperature.toFixed(1) + '°C');
-  setText('val-soil', r.soil_pct + '%');
-  setText('val-rain', r.rain_pct + '%');
+  if (temp != null) setText('val-temp', parseFloat(temp).toFixed(1) + '°C');
+  if (soil != null) setText('val-soil', soil + '%');
+  if (rain != null) setText('val-rain', rain + '%');
   setText('last-update', new Date().toLocaleTimeString());
 
-  // Actuator badges
-  setBadge('act-pump',   r.pump_state);
-  setBadge('act-fan',    r.fan_state);
-  setBadge('act-heater', r.heater_state);
-  setBadge('act-lid',    r.lid_state);
+  // Normalise actuator values (Supabase stores booleans; BT gives text)
+  const pumpVal   = r.pump_state   ?? (r.pump_on   ? 'ON' : 'OFF');
+  const fanVal    = r.fan_state    ?? (r.fan_on    ? 'ON' : 'OFF');
+  const heaterVal = r.heater_state ?? (r.heater_on ? 'ON' : 'OFF');
+  const lidVal    = r.lid_state    ?? 'UNKNOWN';
+
+  setBadge('act-pump',   pumpVal);
+  setBadge('act-fan',    fanVal);
+  setBadge('act-heater', heaterVal);
+  setBadge('act-lid',    lidVal);
+
+  // Mode badge (dashboard actuator grid)
+  const mode = r.mode ?? (state.arduinoMode === 'test' ? 'TEST' : 'AUTO');
+  const modeBadge = document.getElementById('act-mode');
+  if (modeBadge) {
+    modeBadge.textContent = mode.toUpperCase();
+    modeBadge.className = 'text-[10px] font-bold py-1 px-2 rounded-full self-start ' +
+      (mode.toUpperCase() === 'AUTO'
+        ? 'bg-primary-container text-on-primary-container'
+        : 'bg-tertiary-container text-on-tertiary-container');
+  }
+
+  // Sync in-memory mode state and testing panel buttons when data arrives from Supabase
+  if (r.mode) {
+    const newMode = r.mode.toLowerCase() === 'test' ? 'test' : 'auto';
+    if (newMode !== state.arduinoMode && !state.btConnected) {
+      // Update UI mode toggle without sending a BT command
+      state.arduinoMode = newMode;
+      _syncModeUI(newMode);
+    }
+  }
+
+  // Profile badge
+  const profile = r.profile ?? state.activeProfile.toUpperCase();
+  if (profile) {
+    const profileBadge = document.getElementById('act-profile');
+    if (profileBadge) profileBadge.textContent = profile.toUpperCase();
+  }
+
+  // Mode badge in the header area of actuator grid
+  const modeBadgeHeader = document.getElementById('act-mode-badge');
+  if (modeBadgeHeader) {
+    modeBadgeHeader.textContent = mode.toUpperCase();
+    modeBadgeHeader.className = 'text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest ' +
+      (mode.toUpperCase() === 'AUTO'
+        ? 'bg-primary-container text-on-primary-container'
+        : 'bg-tertiary-container text-on-tertiary-container');
+  }
 
   // Wetness gauge arc
-  const arc = document.getElementById('gauge-arc');
+  const arc   = document.getElementById('gauge-arc');
   const valEl = document.getElementById('gauge-val');
-  if (arc && valEl) {
-    const pct = Math.min(100, Math.max(0, r.rain_pct));
+  if (arc && valEl && rain != null) {
+    const pct = Math.min(100, Math.max(0, rain));
     const circumference = 251;
     arc.style.strokeDashoffset = circumference - (circumference * pct / 100);
     valEl.textContent = pct + '%';
   }
 
   // Trend chart ring buffer (max 30 points)
-  const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  if (state.tempHistory.length >= 30) {
-    state.tempHistory.shift();
-    state.soilHistory.shift();
-    state.labels.shift();
-  }
-  state.tempHistory.push(r.temperature);
-  state.soilHistory.push(r.soil_pct);
-  state.labels.push(now);
+  if (temp != null && soil != null) {
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    if (state.tempHistory.length >= 30) {
+      state.tempHistory.shift();
+      state.soilHistory.shift();
+      state.labels.shift();
+    }
+    state.tempHistory.push(parseFloat(temp));
+    state.soilHistory.push(soil);
+    state.labels.push(now);
 
-  if (trendsChart) trendsChart.update();
+    if (trendsChart) trendsChart.update();
+  }
+}
+
+/** Sync the AUTO/TEST toggle button styles without sending a BT command. */
+function _syncModeUI(mode) {
+  const btnAuto = document.getElementById('btn-auto-mode');
+  const btnTest = document.getElementById('btn-test-mode');
+  const warn    = document.getElementById('test-warning');
+  if (btnAuto && btnTest) {
+    btnAuto.className = 'px-7 py-2 text-sm font-semibold rounded-lg transition-all ' +
+      (mode === 'auto' ? 'bg-primary text-on-primary shadow-sm' : 'text-slate-500');
+    btnTest.className = 'px-7 py-2 text-sm font-semibold rounded-lg transition-all ' +
+      (mode === 'test' ? 'bg-primary text-on-primary shadow-sm' : 'text-slate-500');
+  }
+  if (warn) warn.classList.toggle('hidden', mode !== 'test');
 }
 
 /* ─── Terminal helpers ───────────────────────────────────────────────────── */
@@ -1158,7 +1257,7 @@ function sendRawCommand() {
   const cmd = inp.value.trim();
   if (typeof BluetoothService !== 'undefined') BluetoothService.send(cmd + '\n');
   appendLog('>> ' + cmd, 'info');
-  if (typeof SupabaseService !== 'undefined') SupabaseService.logCommand(cmd);
+  if (typeof SupabaseService !== 'undefined') SupabaseService.queueCommand(cmd);
   inp.value = '';
 }
 
@@ -1191,7 +1290,7 @@ function applyProfile() {
   const p = PROFILES[state.activeProfile];
   if (typeof BluetoothService !== 'undefined') BluetoothService.send(p.cmd);
   appendLog(`[PROFILE] Applied ${p.label}: TEMP_HIGH=${p.tempHigh}°C, SOIL_DRY=${p.soilDry}%`, 'info');
-  if (typeof SupabaseService !== 'undefined') SupabaseService.logCommand('PROFILE:' + p.cmd);
+  if (typeof SupabaseService !== 'undefined') SupabaseService.queueCommand(p.cmd);
   setText('act-profile', p.label.toUpperCase());
 }
 
@@ -1202,17 +1301,10 @@ function setArduinoMode(mode) {
   if (typeof BluetoothService !== 'undefined') BluetoothService.send(cmd);
   appendLog(`[MODE] Switched to ${mode.toUpperCase()}`, 'info');
 
-  // Toggle button styles
-  const btnAuto = document.getElementById('btn-auto-mode');
-  const btnTest = document.getElementById('btn-test-mode');
-  const warn    = document.getElementById('test-warning');
-  if (btnAuto && btnTest) {
-    btnAuto.className = 'px-7 py-2 text-sm font-semibold rounded-lg transition-all ' +
-      (mode === 'auto' ? 'bg-primary text-on-primary shadow-sm' : 'text-slate-500');
-    btnTest.className = 'px-7 py-2 text-sm font-semibold rounded-lg transition-all ' +
-      (mode === 'test' ? 'bg-primary text-on-primary shadow-sm' : 'text-slate-500');
-  }
-  if (warn) warn.classList.toggle('hidden', mode !== 'test');
+  // Queue command for gateway delivery via Supabase
+  if (typeof SupabaseService !== 'undefined') SupabaseService.queueCommand(cmd);
+
+  _syncModeUI(mode);
 
   // Update mode badge on dashboard
   const badge = document.getElementById('act-mode');
@@ -1226,7 +1318,8 @@ function setArduinoMode(mode) {
 function sendTestCmd(char, label) {
   if (typeof BluetoothService !== 'undefined') BluetoothService.send(char);
   appendLog(`[TEST] ${label} (cmd: '${char}')`, 'info');
-  if (typeof SupabaseService !== 'undefined') SupabaseService.logCommand(char);
+  // Queue command for gateway delivery via Supabase
+  if (typeof SupabaseService !== 'undefined') SupabaseService.queueCommand(char);
   addCmdHistoryEntry(label);
 }
 
@@ -1265,10 +1358,11 @@ function renderCmdHistory() {
 
 /* ─── Settings ───────────────────────────────────────────────────────────── */
 function saveSettings() {
-  const url  = document.getElementById('inp-supa-url').value;
-  const key  = document.getElementById('inp-supa-key').value;
-  const name = document.getElementById('inp-device-name').value;
-  if (typeof SupabaseService !== 'undefined') SupabaseService.saveConfig(url, key);
+  const url      = document.getElementById('inp-supa-url').value;
+  const key      = document.getElementById('inp-supa-key').value;
+  const deviceId = document.getElementById('inp-device-id').value;
+  const name     = document.getElementById('inp-device-name').value;
+  if (typeof SupabaseService !== 'undefined') SupabaseService.saveConfig(url, key, deviceId);
   if (name) localStorage.setItem('fc_device_name', name);
   appendLog('[SETTINGS] Configuration saved.', 'info');
   alert('Settings saved!');
@@ -1279,15 +1373,18 @@ function discardSettings() {
 }
 
 function loadSettings() {
-  const url  = localStorage.getItem('fc_supabase_url') || '';
-  const key  = localStorage.getItem('fc_supabase_key') || '';
-  const name = localStorage.getItem('fc_device_name')  || 'Flora-GW-01';
-  const urlEl  = document.getElementById('inp-supa-url');
-  const keyEl  = document.getElementById('inp-supa-key');
-  const nameEl = document.getElementById('inp-device-name');
-  if (urlEl)  urlEl.value  = url;
-  if (keyEl)  keyEl.value  = key;
-  if (nameEl) nameEl.value = name;
+  const url      = localStorage.getItem('fc_supabase_url') || '';
+  const key      = localStorage.getItem('fc_supabase_key') || '';
+  const deviceId = localStorage.getItem('fc_device_id')    || '';
+  const name     = localStorage.getItem('fc_device_name')  || 'Flora-GW-01';
+  const urlEl      = document.getElementById('inp-supa-url');
+  const keyEl      = document.getElementById('inp-supa-key');
+  const deviceIdEl = document.getElementById('inp-device-id');
+  const nameEl     = document.getElementById('inp-device-name');
+  if (urlEl)      urlEl.value      = url;
+  if (keyEl)      keyEl.value      = key;
+  if (deviceIdEl) deviceIdEl.value = deviceId;
+  if (nameEl)     nameEl.value     = name;
 }
 
 function toggleKeyVisibility() {
@@ -1327,23 +1424,40 @@ function escHtml(str) {
 }
 
 /* ─── Supabase live subscription ─────────────────────────────────────────── */
-// When the dashboard is open, subscribe to remote readings so other users
-// controlling the device via different browsers also see live updates.
+// On dashboard load, fetch the latest reading so the UI populates immediately
+// without waiting for the first Realtime event.  Then keep updating via
+// Realtime (WebSocket) or 5 s polling fallback.
 function startSupabaseSubscription() {
   if (typeof SupabaseService === 'undefined') return;
   SupabaseService.init();
+
+  // Load the most recent reading immediately
+  SupabaseService.getLatestReading().then(row => {
+    if (row) _applySupabaseRow(row);
+  });
+
+  // Subscribe to live inserts
   SupabaseService.subscribe(row => {
     if (state.btConnected) return; // Prefer direct BT data when available
-    updateDashboard({
-      temperature:  row.temperature,
-      soil_pct:     row.soil_pct,
-      rain_pct:     row.rain_pct,
-      pump_state:   row.pump_state,
-      fan_state:    row.fan_state,
-      heater_state: row.heater_state,
-      lid_state:    row.lid_state,
-    });
+    _applySupabaseRow(row);
   });
+}
+
+/** Map a `readings` table row to the dashboard and sync indicator. */
+function _applySupabaseRow(row) {
+  updateDashboard({
+    temperature:  row.temp_c,
+    soil_pct:     row.soil_pct,
+    rain_pct:     row.rain_pct,
+    pump_state:   row.pump_on   ? 'ON' : 'OFF',
+    fan_state:    row.fan_on    ? 'ON' : 'OFF',
+    heater_state: row.heater_on ? 'ON' : 'OFF',
+    lid_state:    row.lid_state,
+    mode:         row.mode,
+    profile:      row.profile,
+  });
+  const el = document.getElementById('last-sync');
+  if (el) el.textContent = row.ts ? new Date(row.ts).toLocaleTimeString() : new Date().toLocaleTimeString();
 }
 
 /* ─── Boot sequence ──────────────────────────────────────────────────────── */

@@ -1,64 +1,96 @@
 /**
- * FloraCraft Supabase Sync Service
- * ---------------------------------
- * Handles real-time telemetry upload and command relay via Supabase.
+ * FloraCraft Supabase Sync Service (v2)
+ * ---------------------------------------
+ * Handles real-time telemetry display and command relay via Supabase.
+ *
+ * This service connects to the same Supabase project used by the
+ * FloraCraft Gateway (Node.js).  The gateway writes sensor readings from
+ * the Arduino to `public.readings`; the web app reads them and displays
+ * live data.  Manual commands are sent by inserting rows into
+ * `public.commands` with status = 'queued'.
  *
  * SETUP
  * -----
  * 1. Create a Supabase project at https://supabase.com
- * 2. Run the SQL below in the Supabase SQL editor to create the required tables.
- * 3. Enter your Project URL and anon key in the Settings tab of the app
- *    (they are stored in localStorage under 'fc_supabase_url' and 'fc_supabase_key').
+ * 2. Run the SQL in README.md to create the required tables and RLS policies.
+ * 3. In the Settings tab enter your Project URL, Anon Key and Device UUID.
+ *    Values are stored in localStorage under:
+ *      fc_supabase_url  – Project URL
+ *      fc_supabase_key  – Anon key
+ *      fc_device_id     – Device UUID (from devices.id in Supabase)
  *
- * ── SQL: Create tables ──────────────────────────────────────────────────────
+ * TABLE SCHEMAS (managed by the gateway – created once in Supabase SQL Editor)
+ * ─────────────────────────────────────────────────────────────────────────────
  *
- *   -- Sensor readings (one row per 2-second Arduino broadcast)
- *   create table sensor_readings (
- *     id            bigserial primary key,
- *     created_at    timestamptz default now(),
- *     temperature   float,
- *     soil_pct      int,
- *     rain_pct      int,
- *     pump_state    text,
- *     fan_state     text,
- *     heater_state  text,
- *     lid_state     text,
- *     device_id     text default 'Flora-GW-01'
+ *   -- Devices registry
+ *   create table public.devices (
+ *     id         uuid primary key default gen_random_uuid(),
+ *     name       text not null,
+ *     created_at timestamptz default now()
  *   );
  *
- *   -- Command log (every command sent from the app)
- *   create table command_log (
+ *   -- Sensor readings written by the gateway
+ *   create table public.readings (
  *     id         bigserial primary key,
- *     sent_at    timestamptz default now(),
- *     command    text,
- *     source     text default 'web'
+ *     device_id  uuid references public.devices(id),
+ *     raw_data   text,
+ *     temp_c     float,
+ *     soil_pct   int,
+ *     rain_pct   int,
+ *     pump_on    boolean default false,
+ *     fan_on     boolean default false,
+ *     heater_on  boolean default false,
+ *     lid_state  text,
+ *     mode       text default 'AUTO',
+ *     profile    text,
+ *     ts         timestamptz default now()
  *   );
  *
- *   -- Enable Row Level Security + allow anonymous inserts (adjust for production)
- *   alter table sensor_readings enable row level security;
- *   alter table command_log     enable row level security;
- *   create policy "anon insert readings" on sensor_readings for insert with check (true);
- *   create policy "anon insert commands" on command_log     for insert with check (true);
- *   create policy "anon select readings" on sensor_readings for select using (true);
+ *   -- Commands queued by the web app, consumed by the gateway
+ *   create table public.commands (
+ *     id           bigserial primary key,
+ *     device_id    uuid references public.devices(id),
+ *     command      text not null,
+ *     status       text default 'queued',
+ *     response     text,
+ *     sent_at      timestamptz,
+ *     applied_at   timestamptz,
+ *     requested_by text,
+ *     ts           timestamptz default now()
+ *   );
+ *
+ * RLS POLICIES (run in Supabase SQL Editor)
+ * ─────────────────────────────────────────
+ *   alter table public.readings enable row level security;
+ *   alter table public.commands  enable row level security;
+ *   alter table public.devices   enable row level security;
+ *
+ *   create policy "anon select readings" on public.readings for select to anon using (true);
+ *   create policy "anon insert readings" on public.readings for insert to anon with check (true);
+ *   create policy "anon select devices"  on public.devices  for select to anon using (true);
+ *   create policy "anon insert commands" on public.commands for insert to anon with check (true);
+ *   create policy "anon select commands" on public.commands for select to anon using (true);
+ *
+ * REALTIME (Supabase Dashboard)
+ * ─────────────────────────────
+ *   Database → Replication → enable Realtime for table `readings`.
  *
  * ────────────────────────────────────────────────────────────────────────────
- *
- * REAL-TIME SUBSCRIPTION
- * ----------------------
- * Call SupabaseService.subscribe(onRow) to receive live updates whenever
- * another device (or the BT bridge) inserts a new sensor reading.
  */
 
 const SupabaseService = (() => {
-  let _url      = null;  // Supabase project URL
-  let _key      = null;  // Supabase anon public key
-  let _channel  = null;  // Real-time channel subscription
+  let _url       = null;  // Supabase project URL
+  let _key       = null;  // Supabase anon public key
+  let _deviceId  = null;  // Device UUID (from public.devices.id)
+  let _client    = null;  // Supabase JS client (SDK loaded via CDN in app.html)
+  let _channel   = null;  // Realtime channel (or polling interval ID as fallback)
+  let _pollTimer = null;  // Fallback polling interval
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   function _headers() {
     return {
-      'Content-Type': 'application/json',
+      'Content-Type':  'application/json',
       'apikey':        _key,
       'Authorization': `Bearer ${_key}`,
     };
@@ -68,66 +100,152 @@ const SupabaseService = (() => {
     return !!(_url && _key);
   }
 
+  function _getDeviceId() {
+    return _deviceId || '';
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+
   /** Load credentials from localStorage (set by Settings tab). */
   function init() {
-    _url = localStorage.getItem('fc_supabase_url') || '';
-    _key = localStorage.getItem('fc_supabase_key') || '';
+    _url      = localStorage.getItem('fc_supabase_url') || '';
+    _key      = localStorage.getItem('fc_supabase_key') || '';
+    _deviceId = localStorage.getItem('fc_device_id')    || '';
+
     if (_isConfigured()) {
-      console.log('[Supabase] Configured – URL:', _url);
+      console.log('[Supabase] Configured – URL:', _url, '| Device:', _deviceId || '(none)');
+      // Create the Supabase JS client if the SDK was loaded (via CDN script in app.html)
+      if (window.supabase && typeof window.supabase.createClient === 'function') {
+        _client = window.supabase.createClient(_url, _key);
+        console.log('[Supabase] JS SDK client ready.');
+      } else {
+        console.info('[Supabase] JS SDK not found – falling back to fetch polling.');
+      }
     } else {
-      console.info('[Supabase] Not configured. Enter credentials in Settings.');
+      console.info('[Supabase] Not configured. Enter URL, key and device ID in Settings.');
     }
   }
 
   // ── Public API ─────────────────────────────────────────────────────────────
 
   /**
-   * Persist a parsed sensor reading to the sensor_readings table.
-   * Called automatically by app.html when a "DATA,…" line arrives via BT.
+   * Persist a sensor reading to the `readings` table.
+   * Called when a "DATA,…" line arrives via direct Bluetooth connection.
+   * Maps the BT-parsed object to the gateway-compatible column names.
    *
-   * @param {{ temperature, soil_pct, rain_pct, pump_state, fan_state, heater_state, lid_state }} reading
+   * @param {{ temperature, soil_pct, rain_pct, pump_state, fan_state, heater_state, lid_state, mode, profile, raw_data }} reading
    */
   async function pushReading(reading) {
     if (!_isConfigured()) return;
     try {
-      const res = await fetch(`${_url}/rest/v1/sensor_readings`, {
+      const deviceId = _getDeviceId();
+      const row = {
+        ...(deviceId ? { device_id: deviceId } : {}),
+        temp_c:    reading.temperature    ?? reading.temp_c    ?? null,
+        soil_pct:  reading.soil_pct       ?? null,
+        rain_pct:  reading.rain_pct       ?? null,
+        pump_on:   (reading.pump_state    === 'ON') || (reading.pump_on    === true),
+        fan_on:    (reading.fan_state     === 'ON') || (reading.fan_on     === true),
+        heater_on: (reading.heater_state  === 'ON') || (reading.heater_on  === true),
+        lid_state: reading.lid_state      ?? null,
+        mode:      reading.mode           ?? 'AUTO',
+        profile:   reading.profile        ?? null,
+        raw_data:  reading.raw_data       ?? '',
+      };
+      const res = await fetch(`${_url}/rest/v1/readings`, {
         method:  'POST',
-        headers: _headers(),
-        body:    JSON.stringify(reading),
+        headers: { ..._headers(), 'Prefer': 'return=minimal' },
+        body:    JSON.stringify(row),
       });
-      if (!res.ok) console.error('[Supabase] pushReading error:', await res.text());
+      if (!res.ok) {
+        console.error('[Supabase] pushReading error:', await res.text());
+      } else {
+        const el = document.getElementById('last-sync');
+        if (el) el.textContent = new Date().toLocaleTimeString();
+      }
     } catch (err) {
       console.error('[Supabase] pushReading fetch error:', err);
     }
   }
 
   /**
-   * Log a command that was sent to the Arduino.
-   * @param {string} command - e.g. '1', 'a', 'T2500'
+   * Queue a command for the gateway by inserting a row into `public.commands`.
+   * The gateway polls this table and forwards queued commands to the Arduino.
+   *
+   * @param {string} command - Single-char or multi-char command string
+   *   'a' = AUTO mode  |  'm' = TEST mode  |  '0' = stop all
+   *   '1'=pump  '2'=fan  '3'=heater  '4'=open lid  '5'=close lid
+   *   'S'=Silvercock profile  |  'H'=Shia profile
+   *   'T<ms>'=pump timer  |  'L<ms>'=lid timer
    */
-  async function logCommand(command) {
+  async function queueCommand(command) {
     if (!_isConfigured()) return;
     try {
-      await fetch(`${_url}/rest/v1/command_log`, {
+      const deviceId = _getDeviceId();
+      const row = {
+        ...(deviceId ? { device_id: deviceId } : {}),
+        command:      command,
+        status:       'queued',
+        requested_by: 'web',
+      };
+      const res = await fetch(`${_url}/rest/v1/commands`, {
         method:  'POST',
-        headers: _headers(),
-        body:    JSON.stringify({ command, source: 'web' }),
+        headers: { ..._headers(), 'Prefer': 'return=minimal' },
+        body:    JSON.stringify(row),
       });
+      if (!res.ok) {
+        console.error('[Supabase] queueCommand error:', await res.text());
+      } else {
+        console.log('[Supabase] Command queued:', command);
+      }
     } catch (err) {
-      console.error('[Supabase] logCommand error:', err);
+      console.error('[Supabase] queueCommand fetch error:', err);
     }
   }
 
   /**
-   * Fetch the last N sensor readings (for dashboard history on page load).
-   * @param {number} limit - Number of rows to fetch (default 60 = ~2 min of data)
+   * Log a command (queues it via `commands` table for gateway delivery).
+   * Kept for backwards compatibility with sendRawCommand().
+   * @param {string} command
+   */
+  async function logCommand(command) {
+    await queueCommand(command);
+  }
+
+  /**
+   * Fetch the latest reading for the configured device.
+   * @returns {Promise<Object|null>}
+   */
+  async function getLatestReading() {
+    if (!_isConfigured()) return null;
+    try {
+      const deviceId = _getDeviceId();
+      const filter   = deviceId ? `device_id=eq.${encodeURIComponent(deviceId)}&` : '';
+      const res = await fetch(
+        `${_url}/rest/v1/readings?${filter}order=ts.desc&limit=1`,
+        { headers: _headers() }
+      );
+      if (!res.ok) return null;
+      const rows = await res.json();
+      return rows.length ? rows[0] : null;
+    } catch (err) {
+      console.error('[Supabase] getLatestReading error:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Fetch the last N readings for the configured device (chronological order).
+   * @param {number} limit
    * @returns {Promise<Array>}
    */
   async function getRecentReadings(limit = 60) {
     if (!_isConfigured()) return [];
     try {
+      const deviceId = _getDeviceId();
+      const filter   = deviceId ? `device_id=eq.${encodeURIComponent(deviceId)}&` : '';
       const res = await fetch(
-        `${_url}/rest/v1/sensor_readings?order=created_at.desc&limit=${limit}`,
+        `${_url}/rest/v1/readings?${filter}order=ts.desc&limit=${limit}`,
         { headers: _headers() }
       );
       if (!res.ok) return [];
@@ -139,71 +257,116 @@ const SupabaseService = (() => {
   }
 
   /**
-   * Subscribe to real-time INSERT events on sensor_readings.
-   * Uses Supabase Realtime (WebSocket).
+   * Subscribe to real-time INSERT events on `public.readings`.
    *
-   * ── TODO (wiring): Include the Supabase JS SDK in app.html and replace
-   *    the polling approach below with a proper channel subscription:
+   * Uses the Supabase JS SDK (postgres_changes Realtime) when available
+   * (requires the CDN script in app.html and Realtime enabled for the table
+   * in the Supabase dashboard).
    *
-   *   const { createClient } = supabase;
-   *   const client = createClient(_url, _key);
-   *   _channel = client
-   *     .channel('sensor_readings')
-   *     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sensor_readings' },
-   *         payload => onRow(payload.new))
-   *     .subscribe();
+   * Falls back to polling every 5 seconds if the SDK is not loaded.
    *
-   * For now this uses a simple polling fallback every 3 seconds.
-   *
-   * @param {function} onRow - Called with each new reading object.
+   * @param {function} onRow - Called with each new reading row object.
    */
   function subscribe(onRow) {
     if (!_isConfigured()) return;
-    let lastId = 0;
+
+    if (_client) {
+      // ── Supabase Realtime (WebSocket) ──────────────────────────────────────
+      const deviceId = _getDeviceId();
+      const chanOpts = {
+        event:  'INSERT',
+        schema: 'public',
+        table:  'readings',
+      };
+      if (deviceId) chanOpts.filter = `device_id=eq.${deviceId}`;
+
+      _channel = _client
+        .channel('readings-live')
+        .on('postgres_changes', chanOpts, payload => onRow(payload.new))
+        .subscribe(status => {
+          console.log('[Supabase] Realtime status:', status);
+        });
+      console.log('[Supabase] Realtime subscription started.');
+      return;
+    }
+
+    // ── Fallback: polling every 5 s ────────────────────────────────────────
+    console.info('[Supabase] Realtime SDK unavailable – using 5 s polling.');
+    let lastTs = new Date(0).toISOString();
 
     const poll = async () => {
       try {
+        const deviceId = _getDeviceId();
+        const filter   = deviceId ? `device_id=eq.${encodeURIComponent(deviceId)}&` : '';
         const res = await fetch(
-          `${_url}/rest/v1/sensor_readings?id=gt.${lastId}&order=id.asc`,
+          `${_url}/rest/v1/readings?${filter}ts=gt.${encodeURIComponent(lastTs)}&order=ts.asc`,
           { headers: _headers() }
         );
         if (res.ok) {
           const rows = await res.json();
           rows.forEach(row => {
-            lastId = row.id;
+            lastTs = row.ts;
             onRow(row);
           });
         }
       } catch (_) { /* silent */ }
     };
 
-    // Initial fetch then poll
     poll();
-    const timerId = setInterval(poll, 3000);
-    _channel = timerId; // store so we can cancel
+    _pollTimer = setInterval(poll, 5000);
+    _channel   = _pollTimer;
   }
 
-  /** Stop the real-time subscription / polling. */
+  /** Stop the real-time subscription or polling timer. */
   function unsubscribe() {
-    if (_channel !== null) {
+    if (_client && _channel && typeof _channel.unsubscribe === 'function') {
+      _channel.unsubscribe();
+    } else if (typeof _channel === 'number') {
       clearInterval(_channel);
-      _channel = null;
     }
+    _channel   = null;
+    _pollTimer = null;
   }
 
   /**
-   * Save Supabase credentials to localStorage.
+   * Save Supabase credentials and device ID to localStorage.
    * Called by the Settings tab Save button.
+   * @param {string} url
+   * @param {string} key
+   * @param {string} [deviceId]
    */
-  function saveConfig(url, key) {
-    _url = url.trim();
-    _key = key.trim();
+  function saveConfig(url, key, deviceId) {
+    _url      = url.trim();
+    _key      = key.trim();
+    _deviceId = (deviceId || '').trim();
     localStorage.setItem('fc_supabase_url', _url);
     localStorage.setItem('fc_supabase_key', _key);
+    localStorage.setItem('fc_device_id',    _deviceId);
+    // Re-create the SDK client with updated credentials
+    _client = null;
+    if (_isConfigured() && window.supabase && typeof window.supabase.createClient === 'function') {
+      _client = window.supabase.createClient(_url, _key);
+    }
     console.log('[Supabase] Config saved.');
   }
 
-  return { init, pushReading, logCommand, getRecentReadings, subscribe, unsubscribe, saveConfig };
+  /** Return the currently configured device UUID. */
+  function getDeviceId() {
+    return _getDeviceId();
+  }
+
+  return {
+    init,
+    pushReading,
+    queueCommand,
+    logCommand,
+    getLatestReading,
+    getRecentReadings,
+    subscribe,
+    unsubscribe,
+    saveConfig,
+    getDeviceId,
+  };
 })();
 
 window.SupabaseService = SupabaseService;
