@@ -155,38 +155,87 @@ at runtime without reflashing.
 2. Open the **SQL Editor** and run:
 
 ```sql
--- Sensor readings
-create table sensor_readings (
-  id            bigserial primary key,
-  created_at    timestamptz default now(),
-  temperature   float,
-  soil_pct      int,
-  rain_pct      int,
-  pump_state    text,
-  fan_state     text,
-  heater_state  text,
-  lid_state     text,
-  device_id     text default 'Flora-GW-01'
+-- Sensor readings (one row per 2-second Arduino broadcast)
+create table readings (
+  id         bigserial primary key,
+  ts         timestamptz default now(),
+  device_id  text not null,
+  raw_data   text,
+  temp_c     float,
+  soil_pct   int,
+  rain_pct   int,
+  pump_on    boolean default false,
+  fan_on     boolean default false,
+  heater_on  boolean default false,
+  lid_state  text,
+  mode       text default 'auto',
+  profile    text default 'silvercock'
 );
 
--- Command log
-create table command_log (
-  id       bigserial primary key,
-  sent_at  timestamptz default now(),
-  command  text,
-  source   text default 'web'
+-- Commands queued by the web app for the gateway to execute
+create table commands (
+  id         bigserial primary key,
+  created_at timestamptz default now(),
+  device_id  text not null,
+  command    text not null,
+  status     text default 'queued',
+  source     text default 'web'
 );
 
--- Allow anonymous access (adjust for production)
-alter table sensor_readings enable row level security;
-alter table command_log     enable row level security;
-create policy "anon insert readings" on sensor_readings for insert with check (true);
-create policy "anon select readings" on sensor_readings for select using (true);
-create policy "anon insert commands" on command_log     for insert with check (true);
+-- Row Level Security (allow anonymous access – tighten for production)
+alter table readings  enable row level security;
+alter table commands  enable row level security;
+create policy "anon insert readings" on readings for insert with check (true);
+create policy "anon select readings" on readings for select using (true);
+create policy "anon insert commands" on commands for insert with check (true);
+create policy "anon select commands" on commands for select using (true);
+
+-- Enable Realtime for live dashboard updates
+alter publication supabase_realtime add table readings;
 ```
 
-3. In the **Settings** tab of the app, enter your **Project URL** and **Anon Key**
+3. In the **Settings** tab of the app:
+   - Enter your **Project URL** and **Anon Key**
+   - Set the **Device ID** to match the `device_id` value your gateway uses (default: `Flora-GW-01`)
 4. Click **Save Configuration** – readings will start syncing automatically
+
+### How Device ID works
+
+The `device_id` field links readings and commands to a specific Arduino gateway node.
+The gateway (Node.js script) uses this same identifier when inserting rows into `readings`.
+The web app filters live readings and routes queued commands by this ID.
+
+### Gateway setup (Node.js BT→Supabase bridge)
+
+The gateway reads Arduino serial output via Bluetooth and writes to Supabase:
+
+1. Set environment variables (or `.env` file):
+
+```
+SUPABASE_URL=https://rpxxybykewhtzmlloadf.supabase.co
+SUPABASE_KEY=<your-anon-key>
+DEVICE_ID=Flora-GW-01
+SERIAL_PORT=COM10   # Windows: check Device Manager → Bluetooth COM ports
+                    # Linux/Mac: /dev/rfcomm0 or /dev/tty.HC-05-...
+BAUD_RATE=9600
+```
+
+2. The gateway:
+   - Parses `DATA,<temp>,<soil%>,<rain%>,<pump>,<fan>,<heater>,<lid>` lines
+   - Inserts into `readings` with the mapped column names
+   - Polls `commands` for rows with `status='queued'` matching the device ID
+   - Sends each command to the Arduino over serial, then marks it `status='done'`
+
+### Realtime setup
+
+Supabase Realtime pushes new rows to the web app over WebSocket without polling.
+After running the SQL above, verify in the Supabase dashboard:
+
+1. Go to **Database → Replication**
+2. Confirm `readings` is listed under `supabase_realtime` publication
+
+The web app uses `@supabase/supabase-js v2` (loaded from CDN) for Realtime.
+If the SDK fails to load, the app automatically falls back to 3-second REST polling.
 
 ---
 
@@ -204,9 +253,8 @@ Serve it over HTTPS (e.g. deploy to Vercel/Netlify) and:
 | Task | File | Search for |
 |------|------|-----------|
 | Switch to Web Serial API (classic BT) | `src/bluetooth.js` | `// ── TODO (wiring): If using classic BT` |
-| Replace polling with Supabase Realtime | `src/supabase.js` | `// ── TODO (wiring): Include the Supabase JS SDK` |
 | Add Chart.js real gauge (semicircle) | `src/app.html` | `gauge-arc` |
-| Load historical data on startup | `src/app.html` | `startSupabaseSubscription` |
+| Add historical chart data on startup | `src/app.html` | `startSupabaseSubscription` |
 
 ---
 

@@ -58,6 +58,9 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
+  <!-- Supabase JS SDK (provides window.supabase.createClient for Realtime) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
+
   <!-- FloraCraft Services (absolute paths – work under any serving URL/rewrite) -->
   <script src="/src/bluetooth.js" defer></script>
   <script src="/src/supabase.js"  defer></script>
@@ -822,16 +825,20 @@
         <div class="md:col-span-4">
           <h2 class="text-base font-bold mb-1">Hardware Identity</h2>
           <p class="text-sm text-on-surface-variant">
-            Unique node name that appears in Supabase rows and the dashboard header.
+            Device ID must match the <code class="font-mono text-xs">device_id</code> column used
+            by the gateway when writing to Supabase. Used to filter live readings and route commands.
           </p>
         </div>
         <div class="md:col-span-8 bg-surface-container-lowest p-7 rounded-xl shadow-sm">
           <div class="flex gap-4 items-center">
-            <div class="flex-1">
-              <label class="block text-xs font-bold uppercase tracking-widest text-outline mb-1.5">Device Name</label>
-              <input id="inp-device-name" type="text"
-                     value="Flora-GW-01"
-                     class="w-full bg-surface-container-high border-none rounded-lg px-3 py-2.5 text-sm focus:ring-0 focus:border-l-4 focus:border-l-primary transition-all" />
+            <div class="flex-1 space-y-4">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-widest text-outline mb-1.5">Device ID</label>
+                <input id="inp-device-id" type="text"
+                       placeholder="Flora-GW-01"
+                       class="w-full bg-surface-container-high border-none rounded-lg px-3 py-2.5 text-sm font-mono focus:ring-0 focus:border-l-4 focus:border-l-primary transition-all" />
+                <p class="text-[11px] text-on-surface-variant mt-1">Must match the gateway's <code class="font-mono">device_id</code> value.</p>
+              </div>
             </div>
             <div class="w-14 h-14 rounded-xl bg-surface-container flex items-center justify-center text-primary shrink-0">
               <span class="material-symbols-outlined text-3xl">memory</span>
@@ -1062,12 +1069,14 @@ function onBtData(line) {
     state.lastReading = reading;
     updateDashboard(reading);
 
-    // ── TODO (wiring): Push to Supabase ──
+    // Push to Supabase with new schema (raw line, device_id, mode, profile)
     if (typeof SupabaseService !== 'undefined') {
-      SupabaseService.pushReading(reading).then(() => {
-        const el = document.getElementById('last-sync');
-        if (el) el.textContent = new Date().toLocaleTimeString();
-      });
+      const deviceId = localStorage.getItem('fc_device_id') || 'Flora-GW-01';
+      SupabaseService.pushReading(reading, line, deviceId, state.arduinoMode, state.activeProfile)
+        .then(() => {
+          const el = document.getElementById('last-sync');
+          if (el) el.textContent = new Date().toLocaleTimeString();
+        });
     }
   }
 }
@@ -1158,7 +1167,7 @@ function sendRawCommand() {
   const cmd = inp.value.trim();
   if (typeof BluetoothService !== 'undefined') BluetoothService.send(cmd + '\n');
   appendLog('>> ' + cmd, 'info');
-  if (typeof SupabaseService !== 'undefined') SupabaseService.logCommand(cmd);
+  if (typeof SupabaseService !== 'undefined') SupabaseService.queueCommand(cmd);
   inp.value = '';
 }
 
@@ -1191,15 +1200,16 @@ function applyProfile() {
   const p = PROFILES[state.activeProfile];
   if (typeof BluetoothService !== 'undefined') BluetoothService.send(p.cmd);
   appendLog(`[PROFILE] Applied ${p.label}: TEMP_HIGH=${p.tempHigh}°C, SOIL_DRY=${p.soilDry}%`, 'info');
-  if (typeof SupabaseService !== 'undefined') SupabaseService.logCommand('PROFILE:' + p.cmd);
+  if (typeof SupabaseService !== 'undefined') SupabaseService.queueCommand(p.cmd);
   setText('act-profile', p.label.toUpperCase());
 }
 
 /* ─── Testing mode ───────────────────────────────────────────────────────── */
-function setArduinoMode(mode) {
+function setArduinoMode(mode, skipQueue) {
   state.arduinoMode = mode;
   const cmd = mode === 'auto' ? 'a' : 'm';
   if (typeof BluetoothService !== 'undefined') BluetoothService.send(cmd);
+  if (!skipQueue && typeof SupabaseService !== 'undefined') SupabaseService.queueCommand(cmd);
   appendLog(`[MODE] Switched to ${mode.toUpperCase()}`, 'info');
 
   // Toggle button styles
@@ -1226,7 +1236,7 @@ function setArduinoMode(mode) {
 function sendTestCmd(char, label) {
   if (typeof BluetoothService !== 'undefined') BluetoothService.send(char);
   appendLog(`[TEST] ${label} (cmd: '${char}')`, 'info');
-  if (typeof SupabaseService !== 'undefined') SupabaseService.logCommand(char);
+  if (typeof SupabaseService !== 'undefined') SupabaseService.queueCommand(char);
   addCmdHistoryEntry(label);
 }
 
@@ -1265,11 +1275,10 @@ function renderCmdHistory() {
 
 /* ─── Settings ───────────────────────────────────────────────────────────── */
 function saveSettings() {
-  const url  = document.getElementById('inp-supa-url').value;
-  const key  = document.getElementById('inp-supa-key').value;
-  const name = document.getElementById('inp-device-name').value;
-  if (typeof SupabaseService !== 'undefined') SupabaseService.saveConfig(url, key);
-  if (name) localStorage.setItem('fc_device_name', name);
+  const url      = document.getElementById('inp-supa-url').value;
+  const key      = document.getElementById('inp-supa-key').value;
+  const deviceId = document.getElementById('inp-device-id').value || 'Flora-GW-01';
+  if (typeof SupabaseService !== 'undefined') SupabaseService.saveConfig(url, key, deviceId);
   appendLog('[SETTINGS] Configuration saved.', 'info');
   alert('Settings saved!');
 }
@@ -1279,15 +1288,15 @@ function discardSettings() {
 }
 
 function loadSettings() {
-  const url  = localStorage.getItem('fc_supabase_url') || '';
-  const key  = localStorage.getItem('fc_supabase_key') || '';
-  const name = localStorage.getItem('fc_device_name')  || 'Flora-GW-01';
-  const urlEl  = document.getElementById('inp-supa-url');
-  const keyEl  = document.getElementById('inp-supa-key');
-  const nameEl = document.getElementById('inp-device-name');
-  if (urlEl)  urlEl.value  = url;
-  if (keyEl)  keyEl.value  = key;
-  if (nameEl) nameEl.value = name;
+  const url      = localStorage.getItem('fc_supabase_url') || '';
+  const key      = localStorage.getItem('fc_supabase_key') || '';
+  const deviceId = localStorage.getItem('fc_device_id')    || 'Flora-GW-01';
+  const urlEl      = document.getElementById('inp-supa-url');
+  const keyEl      = document.getElementById('inp-supa-key');
+  const deviceIdEl = document.getElementById('inp-device-id');
+  if (urlEl)      urlEl.value      = url;
+  if (keyEl)      keyEl.value      = key;
+  if (deviceIdEl) deviceIdEl.value = deviceId;
 }
 
 function toggleKeyVisibility() {
@@ -1327,23 +1336,44 @@ function escHtml(str) {
 }
 
 /* ─── Supabase live subscription ─────────────────────────────────────────── */
+// Map a `readings` table row (new schema) to the internal dashboard format.
+function _rowToReading(row) {
+  return {
+    temperature:  row.temp_c,
+    soil_pct:     row.soil_pct,
+    rain_pct:     row.rain_pct,
+    pump_state:   row.pump_on    ? 'ON' : 'OFF',
+    fan_state:    row.fan_on     ? 'ON' : 'OFF',
+    heater_state: row.heater_on  ? 'ON' : 'OFF',
+    lid_state:    row.lid_state  || 'CLOSED',
+    mode:         row.mode       || 'auto',
+    profile:      row.profile    || 'silvercock',
+  };
+}
+
 // When the dashboard is open, subscribe to remote readings so other users
 // controlling the device via different browsers also see live updates.
 function startSupabaseSubscription() {
   if (typeof SupabaseService === 'undefined') return;
   SupabaseService.init();
+
+  // Pre-populate dashboard with the last recorded reading
+  const deviceId = localStorage.getItem('fc_device_id') || 'Flora-GW-01';
+  SupabaseService.getLatestReading(deviceId).then(row => {
+    if (!row) return;
+    const r = _rowToReading(row);
+    updateDashboard(r);
+    if (r.mode)    setArduinoMode(r.mode === 'auto' ? 'auto' : 'test', /* skipQueue */ true);
+    if (r.profile) selectProfile(r.profile.toLowerCase() === 'shia' ? 'shia' : 'silvercock');
+  });
+
   SupabaseService.subscribe(row => {
     if (state.btConnected) return; // Prefer direct BT data when available
-    updateDashboard({
-      temperature:  row.temperature,
-      soil_pct:     row.soil_pct,
-      rain_pct:     row.rain_pct,
-      pump_state:   row.pump_state,
-      fan_state:    row.fan_state,
-      heater_state: row.heater_state,
-      lid_state:    row.lid_state,
-    });
-  });
+    const r = _rowToReading(row);
+    updateDashboard(r);
+    if (r.mode)    setArduinoMode(r.mode === 'auto' ? 'auto' : 'test', /* skipQueue */ true);
+    if (r.profile) selectProfile(r.profile.toLowerCase() === 'shia' ? 'shia' : 'silvercock');
+  }, deviceId);
 }
 
 /* ─── Boot sequence ──────────────────────────────────────────────────────── */

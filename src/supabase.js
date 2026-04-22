@@ -7,52 +7,65 @@
  * -----
  * 1. Create a Supabase project at https://supabase.com
  * 2. Run the SQL below in the Supabase SQL editor to create the required tables.
- * 3. Enter your Project URL and anon key in the Settings tab of the app
- *    (they are stored in localStorage under 'fc_supabase_url' and 'fc_supabase_key').
+ * 3. Enter your Project URL, anon key, and Device ID in the Settings tab of the app.
+ *    (stored in localStorage: 'fc_supabase_url', 'fc_supabase_key', 'fc_device_id')
  *
  * ── SQL: Create tables ──────────────────────────────────────────────────────
  *
  *   -- Sensor readings (one row per 2-second Arduino broadcast)
- *   create table sensor_readings (
- *     id            bigserial primary key,
- *     created_at    timestamptz default now(),
- *     temperature   float,
- *     soil_pct      int,
- *     rain_pct      int,
- *     pump_state    text,
- *     fan_state     text,
- *     heater_state  text,
- *     lid_state     text,
- *     device_id     text default 'Flora-GW-01'
- *   );
- *
- *   -- Command log (every command sent from the app)
- *   create table command_log (
+ *   create table readings (
  *     id         bigserial primary key,
- *     sent_at    timestamptz default now(),
- *     command    text,
- *     source     text default 'web'
+ *     ts         timestamptz default now(),
+ *     device_id  text not null,
+ *     raw_data   text,
+ *     temp_c     float,
+ *     soil_pct   int,
+ *     rain_pct   int,
+ *     pump_on    boolean default false,
+ *     fan_on     boolean default false,
+ *     heater_on  boolean default false,
+ *     lid_state  text,
+ *     mode       text default 'auto',
+ *     profile    text default 'silvercock'
  *   );
  *
- *   -- Enable Row Level Security + allow anonymous inserts (adjust for production)
- *   alter table sensor_readings enable row level security;
- *   alter table command_log     enable row level security;
- *   create policy "anon insert readings" on sensor_readings for insert with check (true);
- *   create policy "anon insert commands" on command_log     for insert with check (true);
- *   create policy "anon select readings" on sensor_readings for select using (true);
+ *   -- Commands queued by the web app for the gateway to execute
+ *   create table commands (
+ *     id           bigserial primary key,
+ *     created_at   timestamptz default now(),
+ *     device_id    text not null,
+ *     command      text not null,
+ *     status       text default 'queued',
+ *     source       text default 'web'
+ *   );
+ *
+ *   -- Enable Row Level Security + allow anonymous access (adjust for production)
+ *   alter table readings  enable row level security;
+ *   alter table commands  enable row level security;
+ *   create policy "anon insert readings" on readings for insert with check (true);
+ *   create policy "anon select readings" on readings for select using (true);
+ *   create policy "anon insert commands" on commands for insert with check (true);
+ *   create policy "anon select commands" on commands for select using (true);
+ *
+ *   -- Enable Realtime for the readings table (Supabase dashboard → Database → Replication)
+ *   -- Or run: alter publication supabase_realtime add table readings;
  *
  * ────────────────────────────────────────────────────────────────────────────
  *
  * REAL-TIME SUBSCRIPTION
  * ----------------------
- * Call SupabaseService.subscribe(onRow) to receive live updates whenever
- * another device (or the BT bridge) inserts a new sensor reading.
+ * Requires the Supabase JS SDK (loaded as a CDN script before this file).
+ * Automatically falls back to 3-second polling when the SDK is unavailable.
+ *
+ * Call SupabaseService.subscribe(onRow, deviceId) to receive live updates.
  */
 
 const SupabaseService = (() => {
-  let _url      = null;  // Supabase project URL
-  let _key      = null;  // Supabase anon public key
-  let _channel  = null;  // Real-time channel subscription
+  let _url      = null;   // Supabase project URL
+  let _key      = null;   // Supabase anon public key
+  let _deviceId = null;   // Active device identifier
+  let _client   = null;   // Supabase JS SDK client (when available)
+  let _channel  = null;   // Realtime channel or polling timer
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -68,12 +81,23 @@ const SupabaseService = (() => {
     return !!(_url && _key);
   }
 
+  /** Build (or reuse) the Supabase JS SDK client. */
+  function _getClient() {
+    if (_client) return _client;
+    if (typeof window !== 'undefined' && window.supabase && window.supabase.createClient) {
+      _client = window.supabase.createClient(_url, _key);
+    }
+    return _client;
+  }
+
   /** Load credentials from localStorage (set by Settings tab). */
   function init() {
-    _url = localStorage.getItem('fc_supabase_url') || '';
-    _key = localStorage.getItem('fc_supabase_key') || '';
+    _url      = localStorage.getItem('fc_supabase_url') || '';
+    _key      = localStorage.getItem('fc_supabase_key') || '';
+    _deviceId = localStorage.getItem('fc_device_id')    || 'Flora-GW-01';
+    _client   = null; // reset client so it picks up new credentials
     if (_isConfigured()) {
-      console.log('[Supabase] Configured – URL:', _url);
+      console.log('[Supabase] Configured – URL:', _url, '| Device:', _deviceId);
     } else {
       console.info('[Supabase] Not configured. Enter credentials in Settings.');
     }
@@ -82,18 +106,36 @@ const SupabaseService = (() => {
   // ── Public API ─────────────────────────────────────────────────────────────
 
   /**
-   * Persist a parsed sensor reading to the sensor_readings table.
-   * Called automatically by app.html when a "DATA,…" line arrives via BT.
+   * Persist a sensor reading to the `readings` table.
+   * Called by app.html each time a "DATA,…" line arrives via Bluetooth.
    *
    * @param {{ temperature, soil_pct, rain_pct, pump_state, fan_state, heater_state, lid_state }} reading
+   * @param {string} [rawLine]  - The original "DATA,…" string from the Arduino.
+   * @param {string} [deviceId] - Overrides the stored device ID.
+   * @param {string} [mode]     - Current mode ('auto' | 'test').
+   * @param {string} [profile]  - Current profile ('silvercock' | 'shia').
+   * @returns {Promise<void>}
    */
-  async function pushReading(reading) {
+  async function pushReading(reading, rawLine, deviceId, mode, profile) {
     if (!_isConfigured()) return;
+    const row = {
+      device_id:  deviceId || _deviceId || 'Flora-GW-01',
+      raw_data:   rawLine  || null,
+      temp_c:     reading.temperature,
+      soil_pct:   reading.soil_pct,
+      rain_pct:   reading.rain_pct,
+      pump_on:    reading.pump_state  === 'ON',
+      fan_on:     reading.fan_state   === 'ON',
+      heater_on:  reading.heater_state === 'ON',
+      lid_state:  reading.lid_state,
+      mode:       mode    || 'auto',
+      profile:    profile || 'silvercock',
+    };
     try {
-      const res = await fetch(`${_url}/rest/v1/sensor_readings`, {
+      const res = await fetch(`${_url}/rest/v1/readings`, {
         method:  'POST',
         headers: _headers(),
-        body:    JSON.stringify(reading),
+        body:    JSON.stringify(row),
       });
       if (!res.ok) console.error('[Supabase] pushReading error:', await res.text());
     } catch (err) {
@@ -102,108 +144,148 @@ const SupabaseService = (() => {
   }
 
   /**
-   * Log a command that was sent to the Arduino.
-   * @param {string} command - e.g. '1', 'a', 'T2500'
+   * Queue a command for the gateway by inserting into the `commands` table.
+   * The gateway polls this table and executes rows with status='queued'.
+   *
+   * @param {string} command  - Command character(s), e.g. '1', 'a', 'T2500'
+   * @param {string} [deviceId] - Overrides the stored device ID.
+   * @returns {Promise<void>}
    */
-  async function logCommand(command) {
+  async function queueCommand(command, deviceId) {
     if (!_isConfigured()) return;
     try {
-      await fetch(`${_url}/rest/v1/command_log`, {
+      const res = await fetch(`${_url}/rest/v1/commands`, {
         method:  'POST',
         headers: _headers(),
-        body:    JSON.stringify({ command, source: 'web' }),
+        body:    JSON.stringify({
+          device_id: deviceId || _deviceId || 'Flora-GW-01',
+          command,
+          status:    'queued',
+          source:    'web',
+        }),
       });
+      if (!res.ok) console.error('[Supabase] queueCommand error:', await res.text());
     } catch (err) {
-      console.error('[Supabase] logCommand error:', err);
+      console.error('[Supabase] queueCommand fetch error:', err);
     }
   }
 
   /**
-   * Fetch the last N sensor readings (for dashboard history on page load).
-   * @param {number} limit - Number of rows to fetch (default 60 = ~2 min of data)
-   * @returns {Promise<Array>}
+   * Alias kept for backward compatibility.
+   * @param {string} command
    */
-  async function getRecentReadings(limit = 60) {
-    if (!_isConfigured()) return [];
+  function logCommand(command) {
+    return queueCommand(command);
+  }
+
+  /**
+   * Fetch the most recent reading for the current device.
+   * Used to pre-populate the dashboard on page load.
+   *
+   * @param {string} [deviceId] - Overrides the stored device ID.
+   * @returns {Promise<object|null>}
+   */
+  async function getLatestReading(deviceId) {
+    if (!_isConfigured()) return null;
+    const id = deviceId || _deviceId || 'Flora-GW-01';
     try {
       const res = await fetch(
-        `${_url}/rest/v1/sensor_readings?order=created_at.desc&limit=${limit}`,
+        `${_url}/rest/v1/readings?device_id=eq.${encodeURIComponent(id)}&order=ts.desc&limit=1`,
         { headers: _headers() }
       );
-      if (!res.ok) return [];
-      return (await res.json()).reverse(); // chronological order
+      if (!res.ok) return null;
+      const rows = await res.json();
+      return rows.length ? rows[0] : null;
     } catch (err) {
-      console.error('[Supabase] getRecentReadings error:', err);
-      return [];
+      console.error('[Supabase] getLatestReading error:', err);
+      return null;
     }
   }
 
   /**
-   * Subscribe to real-time INSERT events on sensor_readings.
-   * Uses Supabase Realtime (WebSocket).
+   * Subscribe to real-time INSERT events on `readings`.
+   * Uses Supabase Realtime (WebSocket via SDK) when available,
+   * otherwise falls back to 3-second REST polling.
    *
-   * ── TODO (wiring): Include the Supabase JS SDK in app.html and replace
-   *    the polling approach below with a proper channel subscription:
-   *
-   *   const { createClient } = supabase;
-   *   const client = createClient(_url, _key);
-   *   _channel = client
-   *     .channel('sensor_readings')
-   *     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sensor_readings' },
-   *         payload => onRow(payload.new))
-   *     .subscribe();
-   *
-   * For now this uses a simple polling fallback every 3 seconds.
-   *
-   * @param {function} onRow - Called with each new reading object.
+   * @param {function} onRow   - Called with each new reading row object.
+   * @param {string} [deviceId] - Filter events to this device ID.
    */
-  function subscribe(onRow) {
+  function subscribe(onRow, deviceId) {
     if (!_isConfigured()) return;
-    let lastId = 0;
+    const id = deviceId || _deviceId || 'Flora-GW-01';
 
+    const client = _getClient();
+    if (client) {
+      // ── Supabase Realtime (requires `alter publication supabase_realtime add table readings`) ──
+      _channel = client
+        .channel('readings:' + id)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'readings', filter: `device_id=eq.${id}` },
+          payload => onRow(payload.new)
+        )
+        .subscribe(status => {
+          if (status === 'SUBSCRIBED') {
+            console.log('[Supabase] Realtime subscribed for device:', id);
+          }
+        });
+      return;
+    }
+
+    // ── Polling fallback (no SDK) ──
+    let lastId = 0;
     const poll = async () => {
       try {
         const res = await fetch(
-          `${_url}/rest/v1/sensor_readings?id=gt.${lastId}&order=id.asc`,
+          `${_url}/rest/v1/readings?device_id=eq.${encodeURIComponent(id)}&id=gt.${lastId}&order=id.asc`,
           { headers: _headers() }
         );
         if (res.ok) {
           const rows = await res.json();
-          rows.forEach(row => {
-            lastId = row.id;
-            onRow(row);
-          });
+          rows.forEach(row => { lastId = row.id; onRow(row); });
         }
       } catch (_) { /* silent */ }
     };
-
-    // Initial fetch then poll
     poll();
-    const timerId = setInterval(poll, 3000);
-    _channel = timerId; // store so we can cancel
+    _channel = setInterval(poll, 3000);
   }
 
-  /** Stop the real-time subscription / polling. */
+  /** Stop the real-time subscription or polling timer. */
   function unsubscribe() {
-    if (_channel !== null) {
+    if (_channel === null) return;
+    if (typeof _channel === 'number') {
       clearInterval(_channel);
-      _channel = null;
+    } else if (_channel.unsubscribe) {
+      _channel.unsubscribe();
     }
+    _channel = null;
   }
 
   /**
-   * Save Supabase credentials to localStorage.
+   * Save Supabase credentials and device ID to localStorage.
    * Called by the Settings tab Save button.
    */
-  function saveConfig(url, key) {
-    _url = url.trim();
-    _key = key.trim();
+  function saveConfig(url, key, deviceId) {
+    _url      = url.trim();
+    _key      = key.trim();
+    _deviceId = (deviceId || 'Flora-GW-01').trim();
+    _client   = null; // reset so next call to _getClient() uses new creds
     localStorage.setItem('fc_supabase_url', _url);
     localStorage.setItem('fc_supabase_key', _key);
+    localStorage.setItem('fc_device_id',    _deviceId);
     console.log('[Supabase] Config saved.');
   }
 
-  return { init, pushReading, logCommand, getRecentReadings, subscribe, unsubscribe, saveConfig };
+  return {
+    init,
+    pushReading,
+    queueCommand,
+    logCommand,
+    getLatestReading,
+    subscribe,
+    unsubscribe,
+    saveConfig,
+  };
 })();
 
 window.SupabaseService = SupabaseService;
