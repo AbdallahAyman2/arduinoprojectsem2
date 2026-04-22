@@ -13,7 +13,7 @@ arduinoprojectsem2/
 │   └── floracraft_test/          # Testing / calibration firmware (floracraft_test.ino)
 │
 ├── src/
-│   ├── app.html                  # ★ Main hybrid app (open in Chrome to run)
+│   ├── app.html                  # ★ Main hybrid app (open in Chrome.. to run)
 │   ├── bluetooth.js              # Web Bluetooth serial service (ZS-040/HC-05)
 │   └── supabase.js               # Supabase real-time sync service
 │
