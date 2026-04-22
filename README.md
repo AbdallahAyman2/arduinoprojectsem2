@@ -215,7 +215,7 @@ The gateway reads Arduino serial output via Bluetooth and writes to Supabase:
 SUPABASE_URL=https://rpxxybykewhtzmlloadf.supabase.co
 SUPABASE_KEY=<your-anon-key>
 DEVICE_ID=Flora-GW-01
-SERIAL_PORT=COM10   # Windows: check Device Manager → Bluetooth COM ports
+SERIAL_PORT=COM3    # Windows: check Device Manager → Bluetooth COM ports
                     # Linux/Mac: /dev/rfcomm0 or /dev/tty.HC-05-...
 BAUD_RATE=9600
 ```

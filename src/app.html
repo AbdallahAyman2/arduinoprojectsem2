@@ -1205,6 +1205,12 @@ function applyProfile() {
 }
 
 /* ─── Testing mode ───────────────────────────────────────────────────────── */
+/**
+ * Switch the Arduino between AUTO and TEST/manual mode.
+ * @param {string}  mode      - 'auto' or 'test'
+ * @param {boolean} [skipQueue] - When true, suppresses the Supabase queueCommand call.
+ *   Pass true when syncing mode from a remote reading to avoid echoing the command back.
+ */
 function setArduinoMode(mode, skipQueue) {
   state.arduinoMode = mode;
   const cmd = mode === 'auto' ? 'a' : 'm';
@@ -1351,6 +1357,14 @@ function _rowToReading(row) {
   };
 }
 
+/** Apply a remote reading row to the dashboard without queuing any commands. */
+function _applyRemoteRow(row) {
+  const r = _rowToReading(row);
+  updateDashboard(r);
+  if (r.mode)    setArduinoMode(r.mode === 'auto' ? 'auto' : 'test', /* skipQueue */ true);
+  if (r.profile) selectProfile(Object.prototype.hasOwnProperty.call(PROFILES, r.profile) ? r.profile : 'silvercock');
+}
+
 // When the dashboard is open, subscribe to remote readings so other users
 // controlling the device via different browsers also see live updates.
 function startSupabaseSubscription() {
@@ -1360,19 +1374,12 @@ function startSupabaseSubscription() {
   // Pre-populate dashboard with the last recorded reading
   const deviceId = localStorage.getItem('fc_device_id') || 'Flora-GW-01';
   SupabaseService.getLatestReading(deviceId).then(row => {
-    if (!row) return;
-    const r = _rowToReading(row);
-    updateDashboard(r);
-    if (r.mode)    setArduinoMode(r.mode === 'auto' ? 'auto' : 'test', /* skipQueue */ true);
-    if (r.profile) selectProfile(r.profile.toLowerCase() === 'shia' ? 'shia' : 'silvercock');
+    if (row) _applyRemoteRow(row);
   });
 
   SupabaseService.subscribe(row => {
     if (state.btConnected) return; // Prefer direct BT data when available
-    const r = _rowToReading(row);
-    updateDashboard(r);
-    if (r.mode)    setArduinoMode(r.mode === 'auto' ? 'auto' : 'test', /* skipQueue */ true);
-    if (r.profile) selectProfile(r.profile.toLowerCase() === 'shia' ? 'shia' : 'silvercock');
+    _applyRemoteRow(row);
   }, deviceId);
 }
 

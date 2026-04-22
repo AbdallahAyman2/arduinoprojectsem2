@@ -61,11 +61,14 @@
  */
 
 const SupabaseService = (() => {
-  let _url      = null;   // Supabase project URL
-  let _key      = null;   // Supabase anon public key
-  let _deviceId = null;   // Active device identifier
-  let _client   = null;   // Supabase JS SDK client (when available)
-  let _channel  = null;   // Realtime channel or polling timer
+  const DEFAULT_DEVICE_ID = 'Flora-GW-01';
+
+  let _url           = null;   // Supabase project URL
+  let _key           = null;   // Supabase anon public key
+  let _deviceId      = null;   // Active device identifier
+  let _client        = null;   // Supabase JS SDK client (when available)
+  let _realtimeCh    = null;   // Supabase Realtime channel
+  let _pollTimer     = null;   // Polling fallback interval ID
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -94,7 +97,7 @@ const SupabaseService = (() => {
   function init() {
     _url      = localStorage.getItem('fc_supabase_url') || '';
     _key      = localStorage.getItem('fc_supabase_key') || '';
-    _deviceId = localStorage.getItem('fc_device_id')    || 'Flora-GW-01';
+    _deviceId = localStorage.getItem('fc_device_id')    || DEFAULT_DEVICE_ID;
     _client   = null; // reset client so it picks up new credentials
     if (_isConfigured()) {
       console.log('[Supabase] Configured – URL:', _url, '| Device:', _deviceId);
@@ -119,7 +122,7 @@ const SupabaseService = (() => {
   async function pushReading(reading, rawLine, deviceId, mode, profile) {
     if (!_isConfigured()) return;
     const row = {
-      device_id:  deviceId || _deviceId || 'Flora-GW-01',
+      device_id:  deviceId || _deviceId || DEFAULT_DEVICE_ID,
       raw_data:   rawLine  || null,
       temp_c:     reading.temperature,
       soil_pct:   reading.soil_pct,
@@ -158,7 +161,7 @@ const SupabaseService = (() => {
         method:  'POST',
         headers: _headers(),
         body:    JSON.stringify({
-          device_id: deviceId || _deviceId || 'Flora-GW-01',
+          device_id: deviceId || _deviceId || DEFAULT_DEVICE_ID,
           command,
           status:    'queued',
           source:    'web',
@@ -187,7 +190,7 @@ const SupabaseService = (() => {
    */
   async function getLatestReading(deviceId) {
     if (!_isConfigured()) return null;
-    const id = deviceId || _deviceId || 'Flora-GW-01';
+    const id = deviceId || _deviceId || DEFAULT_DEVICE_ID;
     try {
       const res = await fetch(
         `${_url}/rest/v1/readings?device_id=eq.${encodeURIComponent(id)}&order=ts.desc&limit=1`,
@@ -212,12 +215,12 @@ const SupabaseService = (() => {
    */
   function subscribe(onRow, deviceId) {
     if (!_isConfigured()) return;
-    const id = deviceId || _deviceId || 'Flora-GW-01';
+    const id = deviceId || _deviceId || DEFAULT_DEVICE_ID;
 
     const client = _getClient();
     if (client) {
       // ── Supabase Realtime (requires `alter publication supabase_realtime add table readings`) ──
-      _channel = client
+      _realtimeCh = client
         .channel('readings:' + id)
         .on(
           'postgres_changes',
@@ -247,18 +250,19 @@ const SupabaseService = (() => {
       } catch (_) { /* silent */ }
     };
     poll();
-    _channel = setInterval(poll, 3000);
+    _pollTimer = setInterval(poll, 3000);
   }
 
   /** Stop the real-time subscription or polling timer. */
   function unsubscribe() {
-    if (_channel === null) return;
-    if (typeof _channel === 'number') {
-      clearInterval(_channel);
-    } else if (_channel.unsubscribe) {
-      _channel.unsubscribe();
+    if (_realtimeCh) {
+      _realtimeCh.unsubscribe();
+      _realtimeCh = null;
     }
-    _channel = null;
+    if (_pollTimer !== null) {
+      clearInterval(_pollTimer);
+      _pollTimer = null;
+    }
   }
 
   /**
@@ -268,7 +272,7 @@ const SupabaseService = (() => {
   function saveConfig(url, key, deviceId) {
     _url      = url.trim();
     _key      = key.trim();
-    _deviceId = (deviceId || 'Flora-GW-01').trim();
+    _deviceId = (deviceId || DEFAULT_DEVICE_ID).trim();
     _client   = null; // reset so next call to _getClient() uses new creds
     localStorage.setItem('fc_supabase_url', _url);
     localStorage.setItem('fc_supabase_key', _key);
