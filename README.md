@@ -238,22 +238,34 @@ Or use the **Table Editor** UI.  Copy the `id` UUID – you will need it in Step
 
 ### 5 · Configure the gateway
 
+```bash
+cd FloraCraftGateway
+cp .env.example .env   # then edit .env with your values
+npm install
+```
+
 In `FloraCraftGateway/.env` set:
 ```env
 SUPABASE_URL=https://<your-project>.supabase.co
 SUPABASE_KEY=<your-anon-or-service-key>
 DEVICE_ID=<the UUID from Step 4>
-SERIAL_PORT=COM3   # or whichever COM port the HC-05 uses
+SERIAL_PORT=COM3        # or whichever COM port the HC-05 uses
 BAUD_RATE=9600
+POLL_INTERVAL_MS=3000   # how often to check for new commands (ms)
 ```
 
 Start the gateway:
-```bat
+```bash
 node gateway.js
 ```
 
-You should see `[ARDUINO] DATA,…` lines and rows appearing in the `readings`
+You should see `[Arduino] DATA,…` lines and rows appearing in the `readings`
 table in Supabase.
+
+> **How command delivery works:** the gateway polls the `commands` table every
+> `POLL_INTERVAL_MS` milliseconds.  On each cycle it fetches only the **single
+> newest** row with `status = 'queued'`, marks it `sent` immediately (so it is
+> never forwarded twice), then writes it to the Arduino serial port once.
 
 ### 6 · Configure the web app
 
