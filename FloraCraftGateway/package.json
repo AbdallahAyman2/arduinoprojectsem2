@@ -1,0 +1,13 @@
+{
+  "name": "floracraft-gateway",
+  "version": "1.0.0",
+  "description": "FloraCraft Node.js gateway – bridges Arduino serial (Bluetooth) with Supabase",
+  "main": "gateway.js",
+  "scripts": {
+    "start": "node gateway.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "serialport": "^12.0.0"
+  }
+}
