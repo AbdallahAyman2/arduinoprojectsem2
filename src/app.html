@@ -468,7 +468,7 @@
 
     <!-- Terminal window -->
     <div class="bg-inverse-surface rounded-3xl overflow-hidden flex flex-col shadow-2xl"
-         style="height: 480px;">
+         style="height: min(480px, calc(100dvh - 16rem));">
       <!-- Terminal title bar (macOS style) -->
       <div class="bg-black/30 px-5 py-3 flex justify-between items-center border-b border-white/5">
         <div class="flex gap-1.5">
@@ -992,6 +992,11 @@ function navigateTo(screenId) {
     btn.classList.toggle('bg-primary/10', isActive && btn.classList.contains('sidebar-link'));
     btn.classList.toggle('text-on-surface-variant', !isActive);
   });
+
+  // Scroll terminal to bottom when switching to the Raw Stream screen
+  if (screenId === 'raw_stream') {
+    requestAnimationFrame(scrollTerminalToBottom);
+  }
 }
 
 // Attach nav buttons
@@ -1212,6 +1217,11 @@ function _syncModeUI(mode) {
 }
 
 /* ─── Terminal helpers ───────────────────────────────────────────────────── */
+function scrollTerminalToBottom() {
+  const log = document.getElementById('terminal-log');
+  if (log) log.scrollTop = log.scrollHeight;
+}
+
 const LOG_COLORS = {
   info:  'text-primary-fixed',
   warn:  'text-error-container',
@@ -1237,9 +1247,14 @@ function appendLog(text, type = 'data') {
   `;
   log.appendChild(row);
 
+  // Cap terminal at 500 lines to prevent unbounded DOM growth
+  while (log.children.length > 500) {
+    log.removeChild(log.firstChild);
+  }
+
   const autoScroll = document.getElementById('auto-scroll');
   if (autoScroll && autoScroll.checked) {
-    log.scrollTop = log.scrollHeight;
+    scrollTerminalToBottom();
   }
 }
 
