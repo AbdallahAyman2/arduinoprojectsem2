@@ -555,12 +555,13 @@
           </div>
           <h3 class="text-2xl font-bold font-headline mb-2">Silvercock</h3>
           <p class="text-on-surface-variant text-sm mb-4">
-            High-altitude resilience profile. Triggers fan above 35 °C, runs pump below 55 % soil moisture.
+            Celosia argentea (Cockscomb) — tropical profile. Thrives in 26 °C to 30 °C. Irrigation triggered below 40 % soil moisture. Optimal leaf wetness 10 %–60 %.
           </p>
           <!-- Threshold badges -->
           <div class="flex flex-wrap gap-2 text-[10px] font-bold uppercase">
-            <span class="px-2 py-1 bg-error/10 text-error rounded-full">TEMP_HIGH_ON = 35 °C</span>
-            <span class="px-2 py-1 bg-primary/10 text-primary rounded-full">SOIL_DRY_ON = 55 %</span>
+            <span class="px-2 py-1 bg-error/10 text-error rounded-full">TEMP = 26–30 °C</span>
+            <span class="px-2 py-1 bg-primary/10 text-primary rounded-full">SOIL_DRY = 40 %</span>
+            <span class="px-2 py-1 bg-tertiary/10 text-tertiary rounded-full">LEAF_WET = 10–60 %</span>
           </div>
         </div>
       </div>
@@ -580,11 +581,12 @@
             </div>
             <h3 class="text-xl font-bold font-headline mb-2">Shia</h3>
             <p class="text-on-surface-variant text-sm mb-4">
-              Standard tropical profile. Triggers fan above 30 °C, runs pump below 35 % soil moisture.
+              Shea plant — tropical profile. Thrives in 25 °C to 40 °C. Irrigation triggered below 20 % soil moisture. Optimal leaf wetness 15 %–80 %.
             </p>
             <div class="flex flex-wrap gap-2 text-[10px] font-bold uppercase">
-              <span class="px-2 py-1 bg-error/10 text-error rounded-full">TEMP_HIGH_ON = 30 °C</span>
-              <span class="px-2 py-1 bg-primary/10 text-primary rounded-full">SOIL_DRY_ON = 35 %</span>
+              <span class="px-2 py-1 bg-error/10 text-error rounded-full">TEMP = 25–40 °C</span>
+              <span class="px-2 py-1 bg-primary/10 text-primary rounded-full">SOIL_DRY = 20 %</span>
+              <span class="px-2 py-1 bg-tertiary/10 text-tertiary rounded-full">LEAF_WET = 15–80 %</span>
             </div>
           </div>
           <button class="mt-6 w-full py-3 bg-white text-on-surface text-sm font-bold rounded-xl border border-outline-variant hover:bg-surface-bright transition-colors"
@@ -606,24 +608,24 @@
         </div>
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div class="bg-surface-container-lowest p-5 rounded-2xl border-l-4 border-error">
+      <div class="bg-surface-container-lowest p-5 rounded-2xl border-l-4 border-error">
           <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-3">TEMP_HIGH_ON</span>
-          <span id="thresh-temp-high" class="text-3xl font-bold font-headline">35</span>
+          <span id="thresh-temp-high" class="text-3xl font-bold font-headline">30</span>
           <span class="text-on-surface-variant font-medium"> °C</span>
         </div>
         <div class="bg-surface-container-lowest p-5 rounded-2xl border-l-4 border-secondary">
           <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-3">TEMP_LOW_ON</span>
-          <span class="text-3xl font-bold font-headline">24</span>
+          <span id="thresh-temp-low" class="text-3xl font-bold font-headline">26</span>
           <span class="text-on-surface-variant font-medium"> °C</span>
         </div>
         <div class="bg-surface-container-lowest p-5 rounded-2xl border-l-4 border-primary">
           <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-3">SOIL_DRY_ON</span>
-          <span id="thresh-soil" class="text-3xl font-bold font-headline">55</span>
+          <span id="thresh-soil" class="text-3xl font-bold font-headline">40</span>
           <span class="text-on-surface-variant font-medium"> %</span>
         </div>
         <div class="bg-surface-container-lowest p-5 rounded-2xl border-l-4 border-tertiary">
-          <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-3">RAIN_THRESHOLD</span>
-          <span class="text-3xl font-bold font-headline">45</span>
+          <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-3">LEAF_WET_RANGE</span>
+          <span id="thresh-leaf-wet" class="text-3xl font-bold font-headline">10–60</span>
           <span class="text-on-surface-variant font-medium"> %</span>
         </div>
       </div>
@@ -1263,8 +1265,8 @@ function sendRawCommand() {
 
 /* ─── Plant Profiles ─────────────────────────────────────────────────────── */
 const PROFILES = {
-  silvercock: { tempHigh: 35, soilDry: 55, label: 'Silvercock', cmd: 'S' },
-  shia:       { tempHigh: 30, soilDry: 35, label: 'Shia',        cmd: 'H' },
+  silvercock: { tempLow: 26, tempHigh: 30, soilDry: 40, leafWetMin: 10, leafWetMax: 60, label: 'Silvercock', cmd: 'S' },
+  shia:       { tempLow: 25, tempHigh: 40, soilDry: 20, leafWetMin: 15, leafWetMax: 80, label: 'Shia',        cmd: 'H' },
 };
 
 function selectProfile(id) {
@@ -1282,14 +1284,16 @@ function selectProfile(id) {
 
   // Thresholds display
   setText('thresh-temp-high', p.tempHigh);
+  setText('thresh-temp-low', p.tempLow);
   setText('thresh-soil', p.soilDry);
+  setText('thresh-leaf-wet', p.leafWetMin + '–' + p.leafWetMax);
   setText('active-profile-label', p.label);
 }
 
 function applyProfile() {
   const p = PROFILES[state.activeProfile];
   if (typeof BluetoothService !== 'undefined') BluetoothService.send(p.cmd);
-  appendLog(`[PROFILE] Applied ${p.label}: TEMP_HIGH=${p.tempHigh}°C, SOIL_DRY=${p.soilDry}%`, 'info');
+  appendLog(`[PROFILE] Applied ${p.label}: TEMP=${p.tempLow}–${p.tempHigh}°C, SOIL_DRY=${p.soilDry}%, LEAF_WET=${p.leafWetMin}–${p.leafWetMax}%`, 'info');
   if (typeof SupabaseService !== 'undefined') SupabaseService.queueCommand(p.cmd);
   setText('act-profile', p.label.toUpperCase());
 }
