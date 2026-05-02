@@ -995,8 +995,7 @@ function navigateTo(screenId) {
 
   // Scroll terminal to bottom when switching to the Raw Stream screen
   if (screenId === 'raw_stream') {
-    const log = document.getElementById('terminal-log');
-    if (log) requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; });
+    requestAnimationFrame(scrollTerminalToBottom);
   }
 }
 
@@ -1218,6 +1217,11 @@ function _syncModeUI(mode) {
 }
 
 /* ─── Terminal helpers ───────────────────────────────────────────────────── */
+function scrollTerminalToBottom() {
+  const log = document.getElementById('terminal-log');
+  if (log) log.scrollTop = log.scrollHeight;
+}
+
 const LOG_COLORS = {
   info:  'text-primary-fixed',
   warn:  'text-error-container',
@@ -1250,7 +1254,7 @@ function appendLog(text, type = 'data') {
 
   const autoScroll = document.getElementById('auto-scroll');
   if (autoScroll && autoScroll.checked) {
-    log.scrollTop = log.scrollHeight;
+    scrollTerminalToBottom();
   }
 }
 
